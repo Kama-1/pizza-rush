@@ -23,7 +23,6 @@ import java.util.Random;
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     final private Paint textPaint = new Paint();
     final private Paint textScorePaint = new Paint();
-    final private Paint tutorialGrey = new Paint();
     private SurfaceHolder holder;
     private Random random = new Random();
     private ArrayList<pizza> pizzas = new ArrayList<>();
@@ -48,15 +47,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private enum gameState{
         ACTIVE,
         GAME_OVER,
-        MAIN_MENU,
-        TUTORIAL
+        MAIN_MENU
     }
-    int tutorialState = 0;
-    boolean leftCheck = false;
-    boolean rightCheck = false;
-    int doubleCheck = 0;
-    boolean finishedTutorial = false;
-    private gameState currentGameState = gameState.TUTORIAL;
+    private gameState currentGameState = gameState.MAIN_MENU;
 
     public GamePanel(Context context) {
         super(context);
@@ -73,8 +66,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         textScorePaint.setTextAlign(Paint.Align.LEFT);
         textScorePaint.setStyle(Paint.Style.FILL);
 
-        tutorialGrey.setColor(Color.BLACK);
-        tutorialGrey.setAlpha(125);
         gameLoop = new GameLoop(this);
 
         spawnPatron(-1);
@@ -82,95 +73,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
     public void render(double delta){
         Canvas canvas = holder.lockCanvas();
-        System.out.println("Tutorial state:" + tutorialState);
         switch(currentGameState) {
-            case TUTORIAL:
-                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
-                switch(tutorialState){
-                    case 0:
-                        for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
-                        }
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
-                        canvas.drawText("Tap to throw pizza", 520, 1950, textPaint);
-                        break;
-                    case 1: // Throwing pizza
-                        synchronized (pizzas) {
-                            for(patron patron : patrons){
-                                canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
-                            }
-                            for(pizza pizza : pizzas){
-                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180-pizzaWidth/2, pizza.pizzaPosition, null);
-                                // canvas.drawRect(pizza.pizzaAislePosition*360-180+pizza.pizzaSize/2, pizza.pizzaPosition, pizza.pizzaAislePosition*360 - 180-pizza.pizzaSize/2, pizza.pizzaPosition+pizza.pizzaSize, bluePaint);
-                                pizza.pizzaPosition -= delta * pizza.pizzaSpeed * 60;
-                                if(pizza.pizzaPosition<=0)
-                                    gameOver(0, delta);
-                            }
-                        }
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        break;
-
-                    case 2: // Eating
-
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        break;
-                    case 3: // Telling how to catch plates
-                        for(emptyPlate plate : plates){
-                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180-emptyPlateWidth/2, plate.emptyPlatePos, null);
-                        }
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-
-                        canvas.drawRect(0, 0, 1080, 370, tutorialGrey);
-                        canvas.drawRect(0, 370, 300, 670, tutorialGrey);
-                        canvas.drawRect(780, 370, 1080, 670, tutorialGrey);
-                        canvas.drawRect(0, 670, 1080, 2300, tutorialGrey);
-
-                        canvas.drawText("Be in the right aisle", 520, 750, textPaint);
-                        canvas.drawText("to catch the plates", 520, 850, textPaint);
-                        canvas.drawText("(Tap to continue)", 520, 950, textPaint);
-                        break;
-                    case 4: // Catching the plate
-                        for(emptyPlate plate : plates){
-                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180-emptyPlateWidth/2, plate.emptyPlatePos, null);
-                            plate.emptyPlatePos += delta * plate.emptyPlateSpeed * 60;
-                            if(plate.emptyPlatePos>=1900)
-                                gameOver(2, delta);
-                            canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        }
-                        break;
-                    case 5: // Telling them to move left and right
-                        canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
-                        canvas.drawText("Tap and hold to move aisles", 520, 1950, textPaint);
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        if(playerPosition == 1)
-                            leftCheck = true;
-                        if(playerPosition == 3)
-                            rightCheck = true;
-                        if(leftCheck && rightCheck){
-                            if(doubleCheck >= 2)
-                                tutorialState = 6;
-                            doubleCheck++;
-                            leftCheck = false;
-                            rightCheck = false;
-                        }
-                        break;
-                    case 6: // Final notes & start the game
-                        canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
-                        canvas.drawRect(0, 0, 1080, 2200, tutorialGrey);
-                        canvas.drawText("It's game over if you", 520, 700, textPaint);
-                        canvas.drawText("let a plate or pizza fall", 520, 800, textPaint);
-                        canvas.drawText("Or if a patron gets", 520, 1000, textPaint);
-                        canvas.drawText("too close to you", 520, 1100, textPaint);
-                        canvas.drawText("Try to beat Alyssa's score of 6900", 530, 1300, textPaint);
-                        canvas.drawText("And thank you for playtesting <3", 530, 1400, textPaint);
-                        break;
-                }
-                break;
-
             case MAIN_MENU:
                 canvas.drawBitmap(GameCharacters.MAIN_MENU.getSpriteSheetNoScale(),0, 100, null);
                 canvas.drawText("HighScore: "+highScore, 520, 1600, textPaint);
@@ -273,7 +176,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 if(plate.emptyPlatePos >=1300){ // TEST VALUE (1640)
                     if(plate.emptyPlateAisle == playerPosition){
                         toRemovePlate.add(plate);
-                        tutorialState = 5;
                     }
                 }
             }
@@ -285,12 +187,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         if(isColliding(pizza, patron)){
                             patron.satisfied = true;
                             patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
-                            toRemovePizza.(pizza);
-                            if(currentGameState != gameState.TUTORIAL) {
-                                synchronized (points) {
-                                    points.add(new point(patron.patronAisle * 360 - patron.patronSize, patron.patronPosition, 100));
-                                }
-                            }
+                            toRemovePizza.add(pizza);
                         }
                     }
                 }
@@ -304,13 +201,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
         // Satisfied Patrons
-        if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
+        if(currentGameState == gameState.ACTIVE) {
             for (patron patron : patrons) {
                 if (patron.satisfied) {
                     if (patron.satisfiedTimer <= 0) {
                         toRemovePatron.add(patron);
                         plates.add(new emptyPlate(patron.patronPosition, patron.patronAisle));
-                        tutorialState = 3;
                     } else
                         patron.satisfiedTimer--;
                 }
@@ -337,7 +233,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
         // Updating patron animations
-        if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
+        if(currentGameState == gameState.ACTIVE) {
             for (patron patron : patrons) {
                 long currentTime = SystemClock.elapsedRealtime();
                 if (currentTime - patron.timer >= 400) {
@@ -375,47 +271,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch(currentGameState){
-            case TUTORIAL:
-                switch(tutorialState){
-                    case 0:
-                        if(event.getAction() == MotionEvent.ACTION_UP){
-                            synchronized (pizzas){
-                                pizzas.add(new pizza());
-                            }
-                            tutorialState = 1;
-                        }
-                        break;
-                    case 1:
-                    case 2:
-                    case 4:
-                        break;
-                    case 3:
-                        if(event.getAction() == MotionEvent.ACTION_UP)
-                            tutorialState = 4;
-                        break;
-                    case 5:
-                        if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
-                            if(isPressed == false) {
-                                startTime = SystemClock.elapsedRealtime();
-                                isPressed = true;
-                            }
-                            if(event.getX()<=360)
-                                playerPosition=1;
-                            else if(event.getX()<=720)
-                                playerPosition=2;
-                            else
-                                playerPosition=3;
-                        }
-                        break;
-                    case 6:
-                        if(event.getAction() == MotionEvent.ACTION_UP) {
-                            if (finishedTutorial)
-                                currentGameState = gameState.MAIN_MENU;
-                            else finishedTutorial = true;
-                        }
-                        break;
-                }
-                break;
             case MAIN_MENU:
                 if(event.getAction() == MotionEvent.ACTION_UP){
                     currentGameState = gameState.ACTIVE;
@@ -542,9 +397,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
             }
-        }
-        if(currentGameState == gameState.TUTORIAL && pattern == -1){
-            patrons.add(new patron(400, 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
         }
     }
 
