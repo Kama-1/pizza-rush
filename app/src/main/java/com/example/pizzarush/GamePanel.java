@@ -151,7 +151,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         if(playerPosition == 3)
                             rightCheck = true;
                         if(leftCheck && rightCheck){
-                            if(doubleCheck >= 3)
+                            if(doubleCheck >= 2)
                                 tutorialState = 6;
                             doubleCheck++;
                             leftCheck = false;
@@ -165,7 +165,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         canvas.drawText("let a plate or pizza fall", 520, 800, textPaint);
                         canvas.drawText("Or if a patron gets", 520, 1000, textPaint);
                         canvas.drawText("too close to you", 520, 1100, textPaint);
-                        canvas.drawText("Try to beat a highscore of 6000", 530, 1300, textPaint);
+                        canvas.drawText("Try to beat Alyssa's score of 6900", 530, 1300, textPaint);
                         canvas.drawText("And thank you for playtesting <3", 530, 1400, textPaint);
                         break;
                 }
