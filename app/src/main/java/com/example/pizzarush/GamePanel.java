@@ -285,7 +285,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         if(isColliding(pizza, patron)){
                             patron.satisfied = true;
                             patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
-                            toRemovePizza.add(pizza);
+                            toRemovePizza.(pizza);
                             if(currentGameState != gameState.TUTORIAL) {
                                 synchronized (points) {
                                     points.add(new point(patron.patronAisle * 360 - patron.patronSize, patron.patronPosition, 100));
