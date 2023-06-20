@@ -10,16 +10,9 @@ public enum GameCharacters {
 
     PLAYER(R.drawable.player_sprite),
     PIZZA(R.drawable.pizza),
-    PLATE(R.drawable.plate),
-    PATRON(R.drawable.patron_idle),
-    PATRON_WALK1(R.drawable.patron_walk_1),
-    PATRON_WALK2(R.drawable.patron_walk_2),
-    PATRON_EAT1(R.drawable.patron_eat_1),
-    PATRON_EAT2(R.drawable.patron_eat_2),
-    MAIN_MENU(R.drawable.placeholder_menu),
-    FLOOR(R.drawable.floor),
-    FLOOR_GAMEOVER(R.drawable.floor_gameover),
-    COUNTER(R.drawable.counter);
+    ENEMY_MED(R.drawable.enemy_med_sprite),
+    BULLET_SMALL(R.drawable.bullet_small),
+    MAIN_MENU(R.drawable.placeholder_menu);
 
     private Bitmap spriteSheet;
     private Bitmap spriteSheetNoScale;
