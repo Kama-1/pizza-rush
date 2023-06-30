@@ -9,7 +9,6 @@ import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -17,11 +16,11 @@ import com.example.pizzarush.entities.GameCharacters;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Random;
 
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     final private Paint textPaint = new Paint();
+    final private Paint textPaintBorder = new Paint();
     final private Paint textScorePaint = new Paint();
     final private Paint tutorialGrey = new Paint();
     private SurfaceHolder holder;
@@ -37,36 +36,42 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     // OnTouch Variables -----
     private long startTime = 0;
     private long endTime = 0;
-    private boolean isPressed = false;
+    private boolean hasMoved = false;
+    private int newPosition = playerPosition;
     // ------
     final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
     final private int pizzaWidth = GameCharacters.PIZZA.getSpriteSheet().getWidth();
     final private int emptyPlateWidth = GameCharacters.PLATE.getSpriteSheet().getWidth();
     Object patronSleep = new Object();
     private GameLoop gameLoop;
-    String gameOverReason = null;
+    String gameOverReason = "Default";
     private enum gameState{
         ACTIVE,
         GAME_OVER,
         MAIN_MENU,
-        TUTORIAL
+        TUTORIAL,
     }
     int tutorialState = 0;
     boolean leftCheck = false;
     boolean rightCheck = false;
     int doubleCheck = 0;
     boolean finishedTutorial = false;
-    private gameState currentGameState = gameState.TUTORIAL;
+    private gameState currentGameState = gameState.MAIN_MENU;
 
     public GamePanel(Context context) {
         super(context);
-        System.out.println(playerWidth);
         holder = getHolder();
         holder.addCallback(this);
         textPaint.setColor(Color.WHITE);
         textPaint.setTextSize(75);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setStyle(Paint.Style.FILL);
+
+        textPaintBorder.setStyle(Paint.Style.STROKE);
+        textPaintBorder.setTextSize(75);
+        textPaintBorder.setTextAlign(Paint.Align.CENTER);
+        textPaintBorder.setStrokeWidth(12);
+        textPaintBorder.setColor(Color.BLACK);
 
         textScorePaint.setColor(Color.WHITE);
         textScorePaint.setTextSize(75);
@@ -82,7 +87,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
     public void render(double delta){
         Canvas canvas = holder.lockCanvas();
-        System.out.println("Tutorial state:" + tutorialState);
         switch(currentGameState) {
             case TUTORIAL:
                 canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
@@ -143,6 +147,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         }
                         break;
                     case 5: // Telling them to move left and right
+                        // Maybe add one of those little cursor graphics
+                        // TODO
                         canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
                         canvas.drawText("Tap and hold to move aisles", 520, 1950, textPaint);
                         canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
@@ -161,12 +167,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     case 6: // Final notes & start the game
                         canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
                         canvas.drawRect(0, 0, 1080, 2200, tutorialGrey);
-                        canvas.drawText("It's game over if you", 520, 700, textPaint);
-                        canvas.drawText("let a plate or pizza fall", 520, 800, textPaint);
-                        canvas.drawText("Or if a patron gets", 520, 1000, textPaint);
-                        canvas.drawText("too close to you", 520, 1100, textPaint);
-                        canvas.drawText("Try to beat Alyssa's score of 6900", 530, 1300, textPaint);
-                        canvas.drawText("And thank you for playtesting <3", 530, 1400, textPaint);
+                        canvas.drawText("Feed the patrons", 520, 700, textPaint);
+                        canvas.drawText("and catch the plates :)", 520, 800, textPaint);
+                        canvas.drawText("HIGHSCORE HOLDER", 520, 1100, textPaint);
+                        canvas.drawText("Alyssa: 6900", 530, 1200, textPaint);
+                        canvas.drawText("Thank you for play testing <3", 530, 1400, textPaint);
                         break;
                 }
                 break;
@@ -226,7 +231,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawText("Score :"+score, 10, 100, textScorePaint);
                 break;
             case GAME_OVER:
-                canvas.drawBitmap(GameCharacters.FLOOR_GAMEOVER.getSpriteSheetNoScale(), 0, 0, null);
+                canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
@@ -252,9 +257,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 // PLAYER
                 canvas.drawBitmap(GameCharacters.PLAYER.getSpriteSheet(), playerPosition*360-180-playerWidth/2, 1640, null);
 
-                canvas.drawText("GAME OVER",540, 900, textPaint);
-                canvas.drawText(gameOverReason,540, 1000, textPaint);
-                canvas.drawText("Score: "+score, 520, 1100, textPaint);
+                canvas.drawBitmap((GameCharacters.GAMEOVER_TEXT.getSpriteSheetNoScale()),0,800, null);
+                canvas.drawText(gameOverReason,540, 1100, textPaintBorder);
+                canvas.drawText(gameOverReason,540, 1100, textPaint);
+                canvas.drawText("Score: "+score, 520, 1200, textPaintBorder);
+                canvas.drawText("Score: "+score, 520, 1200, textPaint);
             default:
 
                 break;
@@ -395,10 +402,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         break;
                     case 5:
                         if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
-                            if(isPressed == false) {
-                                startTime = SystemClock.elapsedRealtime();
-                                isPressed = true;
-                            }
                             if(event.getX()<=360)
                                 playerPosition=1;
                             else if(event.getX()<=720)
@@ -424,25 +427,28 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             case ACTIVE:
                 // 0 = no position/failure | 1 = left position | 2 = mid position | 3 = right position
                 if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
-                    if(isPressed == false) {
-                        startTime = SystemClock.elapsedRealtime();
-                        isPressed = true;
+                    if(event.getX()<=360) {
+                        newPosition = 1;
                     }
-                    if(event.getX()<=360)
-                        playerPosition=1;
                     else if(event.getX()<=720)
-                        playerPosition=2;
+                        newPosition=2;
                     else
-                        playerPosition=3;
+                        newPosition=3;
+                    if(newPosition != playerPosition)
+                        hasMoved = true;
+                    playerPosition = newPosition;
                 }
-                if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
-                    endTime = SystemClock.elapsedRealtime();
-                    if(endTime - startTime <=100) {
-                        synchronized (pizzas) {
-                            pizzas.add(new pizza());
+
+                if(event.getAction() == MotionEvent.ACTION_UP) {
+                    if (!hasMoved) {
+                        if (event.getAction() == MotionEvent.ACTION_UP) {
+                            synchronized (pizzas) {
+                                pizzas.add(new pizza());
+                            }
                         }
+                    } else {
+                        hasMoved = false;
                     }
-                    isPressed = false;
                 }
                 break;
             case GAME_OVER:

@@ -18,7 +18,8 @@ public enum GameCharacters {
     PATRON_EAT2(R.drawable.patron_eat_2),
     MAIN_MENU(R.drawable.placeholder_menu),
     FLOOR(R.drawable.floor),
-    FLOOR_GAMEOVER(R.drawable.floor_gameover),
+    GAMEOVER_FLOOR(R.drawable.floor_gameover),
+    GAMEOVER_TEXT(R.drawable.gameover_text),
     COUNTER(R.drawable.counter);
 
     private Bitmap spriteSheet;
