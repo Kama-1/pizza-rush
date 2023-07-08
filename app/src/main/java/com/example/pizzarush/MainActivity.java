@@ -3,6 +3,7 @@ package com.example.pizzarush;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 
 import com.example.pizzarush.GamePanel;
@@ -16,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         gameContext = this;
         setContentView(new GamePanel(this));
+
     }
 
     public static Context getGameContext(){

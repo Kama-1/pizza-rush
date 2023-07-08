@@ -9,6 +9,9 @@ import com.example.pizzarush.R;
 public enum GameCharacters {
 
     PLAYER(R.drawable.player_sprite),
+    PLAYER_THROWING_1(R.drawable.player_throwing_1),
+    PLAYER_THROWING_2(R.drawable.player_throwing_2),
+    PLAYER_THROWING_3(R.drawable.player_throwing_3),
     PIZZA(R.drawable.pizza),
     PLATE(R.drawable.plate),
     PATRON(R.drawable.patron_idle),
