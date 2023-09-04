@@ -30,6 +30,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<patron> patrons = new ArrayList();
     private ArrayList<emptyPlate> plates = new ArrayList<>();
     private ArrayList<point> points = new ArrayList<>();
+    private ArrayList<guessBox> guessBoxes = new ArrayList<>();
     private int patronSpeed = 5;
     private int playerPosition = 2;
     private double playerAnimationState = 0;
@@ -42,6 +43,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
     final private int pizzaWidth = GameCharacters.PIZZA.getSpriteSheet().getWidth();
     final private int emptyPlateWidth = GameCharacters.PLATE.getSpriteSheet().getWidth();
+    final private int guessBoxWidth = GameCharacters.PIZZABOX.getSpriteSheet().getWidth();
     Object patronSleep = new Object();
     private GameLoop gameLoop;
     String gameOverReason = "Default";
@@ -50,13 +52,21 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         GAME_OVER,
         MAIN_MENU,
         TUTORIAL,
+        GUESSING,
     }
+    private gameState currentGameState = gameState.GUESSING;
     int tutorialState = 0;
+    boolean guessingIntroFinished = false;
+    private long swapTimer = System.currentTimeMillis();
+    int swaps = 20; // Swaps that must be done
+    // 5 - slow, 10 - medium, 5 - faster
+    int correctBox = 2;
     boolean leftCheck = false;
     boolean rightCheck = false;
     int doubleCheck = 0;
     boolean finishedTutorial = false;
-    private gameState currentGameState = gameState.MAIN_MENU;
+    int screenWidth = 1280;
+    int screenHeight = 1920;
 
     public GamePanel(Context context) {
         super(context);
@@ -83,6 +93,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         tutorialGrey.setAlpha(125);
         gameLoop = new GameLoop(this);
 
+        guessBoxes.add(new guessBox(0));
+        guessBoxes.add(new guessBox(1));
+        guessBoxes.add(new guessBox(2));
+        guessBoxes.add(new guessBox(3));
+        guessBoxes.add(new guessBox(4));
         spawnPatron(-1);
     }
 
@@ -148,8 +163,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         }
                         break;
                     case 5: // Telling them to move left and right
-                        // Maybe add one of those little cursor graphics
-                        // TODO
                         canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
                         canvas.drawText("Tap and hold to move aisles", 520, 1950, textPaint);
                         canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
@@ -263,129 +276,278 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawText(gameOverReason,540, 1100, textPaint);
                 canvas.drawText("Score: "+score, 520, 1200, textPaintBorder);
                 canvas.drawText("Score: "+score, 520, 1200, textPaint);
-            default:
-
+                break;
+            case GUESSING:
+                canvas.drawColor(Color.BLACK);
+                canvas.drawText("Click the correct box", 520, 750, textPaint);
+                int speed = 40;
+                for(guessBox box : guessBoxes) {
+                    canvas.drawBitmap(box.spriteSheet, box.posX, box.posY, null);
+                    if(box.posX != box.desiredX){
+                        if(Math.abs(box.desiredX - box.posX) < speed){
+                            box.posX = box.desiredX;
+                        }
+                        else if(box.desiredX > box.posX){
+                            box.posX += speed;
+                        }
+                        else{
+                            box.posX -= speed;
+                        }
+                    }
+                    if(box.posY != box.desiredY) {
+                        if(Math.abs(box.desiredY - box.posY) < speed){
+                            box.posY = box.desiredY;
+                        }
+                        else if (box.desiredY > box.posY) {
+                            box.posY += speed;
+                        } else {
+                            box.posY -= speed;
+                        }
+                    }
+                }
                 break;
         }
 
         holder.unlockCanvasAndPost(canvas); // Take the canvas and draw it
     }
+    class guessBox{
+        int id;
+        int posX = -100;
+        int posY = 1000;
+        int desiredX = 0;
+        int desiredY = 0;
+        int posId;
+        Bitmap spriteSheet = GameCharacters.PIZZABOX.getSpriteSheet();
+        public guessBox(int id){
+            this.id = id;
+        }
+    }
 
     public void update(double delta){
-        List<pizza> toRemovePizza = new ArrayList<pizza>();
-        List<patron> toRemovePatron = new ArrayList<patron>();
-        List<emptyPlate> toRemovePlate = new ArrayList<emptyPlate>();
-        List<point> toRemovePoint = new ArrayList<point>();
-        synchronized (plates){
-            for(emptyPlate plate : plates){
-                if(plate.emptyPlatePos >=1300){ // TEST VALUE (1640)
-                    if(plate.emptyPlateAisle == playerPosition){
-                        toRemovePlate.add(plate);
-                        playAudioPlateCollect();
-                        tutorialState = 5;
+        long currentTime = SystemClock.elapsedRealtime();
+        switch(currentGameState){
+            case TUTORIAL:
+            case ACTIVE:
+                List<pizza> toRemovePizza = new ArrayList<pizza>();
+                List<patron> toRemovePatron = new ArrayList<patron>();
+                List<emptyPlate> toRemovePlate = new ArrayList<emptyPlate>();
+                List<point> toRemovePoint = new ArrayList<point>();
+                synchronized (plates){
+                    for(emptyPlate plate : plates){
+                        if(plate.emptyPlatePos >=1300){ // TEST VALUE (1640)
+                            if(plate.emptyPlateAisle == playerPosition){
+                                toRemovePlate.add(plate);
+                                playAudioPlateCollect();
+                                tutorialState = 5;
+                            }
+                        }
                     }
                 }
-            }
-        }
-        synchronized (pizzas){
-            for(pizza pizza : pizzas){
-                synchronized (patrons) {
-                    for (patron patron : patrons) {
-                        if(isColliding(pizza, patron)){
-                            patron.satisfied = true;
-                            patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
-                            toRemovePizza.add(pizza);
-                            playAudioHitPatron();
-                            if(currentGameState != gameState.TUTORIAL) {
-                                synchronized (points) {
-                                    points.add(new point(patron.patronAisle * 360 - patron.patronSize, patron.patronPosition, 100));
+                synchronized (pizzas){
+                    for(pizza pizza : pizzas){
+                        synchronized (patrons) {
+                            for (patron patron : patrons) {
+                                if(isColliding(pizza, patron)){
+                                    patron.satisfied = true;
+                                    patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
+                                    toRemovePizza.add(pizza);
+                                    playAudioHitPatron();
+                                    if(currentGameState != gameState.TUTORIAL) {
+                                        synchronized (points) {
+                                            points.add(new point(patron.patronAisle * 360 - patron.patronSize, patron.patronPosition, 100));
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
-        synchronized (points){
-            for(point point : points){
-                if(point.framesAlive >= point.endFrames){
-                    toRemovePoint.add(point);
-                }
-            }
-        }
-        // Satisfied Patrons
-        if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
-            for (patron patron : patrons) {
-                if (patron.satisfied) {
-                    if (patron.satisfiedTimer <= 0) {
-                        toRemovePatron.add(patron);
-                        plates.add(new emptyPlate(patron.patronPosition, patron.patronAisle));
-                        tutorialState = 3;
-                    } else
-                        patron.satisfiedTimer--;
-                }
-            }
-        }
-        if(toRemovePizza != null){
-            synchronized (pizzas){
-                pizzas.removeAll(toRemovePizza);
-            }
-        }
-        if(toRemovePatron != null){
-            synchronized (patrons){
-                patrons.removeAll(toRemovePatron);
-            }
-        }
-        if(toRemovePlate != null){
-            synchronized (plates){
-                plates.removeAll(toRemovePlate);
-            }
-        }
-        if(toRemovePoint != null){
-            synchronized (points){
-                points.removeAll(toRemovePoint);
-            }
-        }
-        long currentTime = SystemClock.elapsedRealtime();
-        // Updating patron animations
-        if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
-            for (patron patron : patrons) {
-                if (currentTime - patron.timer >= 400) {
-                    if (!patron.satisfied) {
-                        if(currentGameState == gameState.ACTIVE) {
-                            if (patron.spriteToRender.sameAs(GameCharacters.PATRON_WALK1.getSpriteSheet()))
-                                patron.spriteToRender = GameCharacters.PATRON_WALK2.getSpriteSheet();
-                            else
-                                patron.spriteToRender = GameCharacters.PATRON_WALK1.getSpriteSheet();
+                synchronized (points){
+                    for(point point : points){
+                        if(point.framesAlive >= point.endFrames){
+                            toRemovePoint.add(point);
                         }
-                        else
-                            patron.spriteToRender = GameCharacters.PATRON.getSpriteSheet();
-                    } else {
-                        if (patron.spriteToRender.sameAs(GameCharacters.PATRON_EAT1.getSpriteSheet()))
-                            patron.spriteToRender = GameCharacters.PATRON_EAT2.getSpriteSheet();
-                        else
-                            patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
                     }
-                    patron.timer = SystemClock.elapsedRealtime();
                 }
-            }
+                // Satisfied Patrons
+                if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
+                    for (patron patron : patrons) {
+                        if (patron.satisfied) {
+                            if (patron.satisfiedTimer <= 0) {
+                                toRemovePatron.add(patron);
+                                plates.add(new emptyPlate(patron.patronPosition, patron.patronAisle));
+                                tutorialState = 3;
+                            } else
+                                patron.satisfiedTimer--;
+                        }
+                    }
+                }
+                if(toRemovePizza != null){
+                    synchronized (pizzas){
+                        pizzas.removeAll(toRemovePizza);
+                    }
+                }
+                if(toRemovePatron != null){
+                    synchronized (patrons){
+                        patrons.removeAll(toRemovePatron);
+                    }
+                }
+                if(toRemovePlate != null){
+                    synchronized (plates){
+                        plates.removeAll(toRemovePlate);
+                    }
+                }
+                if(toRemovePoint != null){
+                    synchronized (points){
+                        points.removeAll(toRemovePoint);
+                    }
+                }
+
+                // Updating patron animations
+                if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
+                    for (patron patron : patrons) {
+                        if (currentTime - patron.timer >= 400) {
+                            if (!patron.satisfied) {
+                                if(currentGameState == gameState.ACTIVE) {
+                                    if (patron.spriteToRender.sameAs(GameCharacters.PATRON_WALK1.getSpriteSheet()))
+                                        patron.spriteToRender = GameCharacters.PATRON_WALK2.getSpriteSheet();
+                                    else
+                                        patron.spriteToRender = GameCharacters.PATRON_WALK1.getSpriteSheet();
+                                }
+                                else
+                                    patron.spriteToRender = GameCharacters.PATRON.getSpriteSheet();
+                            } else {
+                                if (patron.spriteToRender.sameAs(GameCharacters.PATRON_EAT1.getSpriteSheet()))
+                                    patron.spriteToRender = GameCharacters.PATRON_EAT2.getSpriteSheet();
+                                else
+                                    patron.spriteToRender = GameCharacters.PATRON_EAT1.getSpriteSheet();
+                            }
+                            patron.timer = SystemClock.elapsedRealtime();
+                        }
+                    }
+                }
+                // Updating player animations
+                if(currentGameState != gameState.GAME_OVER){
+                    if(playerAnimationState <= 0) {
+                        playerSprite = GameCharacters.PLAYER.getSpriteSheet();
+                    }
+                    else if (playerAnimationState <= 1) {
+                        playerSprite = GameCharacters.PLAYER_THROWING_3.getSpriteSheet();
+                        playerAnimationState -= 0.1;
+                    } else if (playerAnimationState <= 2) {
+                        playerSprite = GameCharacters.PLAYER_THROWING_2.getSpriteSheet();
+                        playerAnimationState -= 0.1;
+                    } else if (playerAnimationState <= 3) {
+                        playerSprite = GameCharacters.PLAYER_THROWING_1.getSpriteSheet();
+                        playerAnimationState -= 0.1;
+                    }
+                }
+                break;
+            case GUESSING:
+                // currentTime is already updated every update();
+
+                int x0 = screenWidth/5-guessBoxWidth;
+                int y0 = screenHeight/3+guessBoxWidth;
+
+                int x1 = screenWidth-screenWidth/5-guessBoxWidth;
+                int y1 = screenHeight/3+guessBoxWidth;
+
+                int x2 = screenWidth-screenWidth/5-guessBoxWidth;
+                int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                int x3 = screenWidth/5-guessBoxWidth;
+                int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                int x4 = screenWidth/2-guessBoxWidth;
+                int y4 = screenHeight/2+guessBoxWidth;
+
+                // Updating desired positions based off of posID
+                synchronized (guessBoxes) {
+                    for (guessBox box : guessBoxes) {
+                        switch (box.posId) {
+                            case 0:
+                                box.desiredX = x0;
+                                box.desiredY = y0;
+                                break;
+                            case 1:
+                                box.desiredX = x1;
+                                box.desiredY = y1;
+                                break;
+                            case 2:
+                                box.desiredX = x2;
+                                box.desiredY = y2;
+                                break;
+                            case 3:
+                                box.desiredX = x3;
+                                box.desiredY = y3;
+                                break;
+                            case 4:
+                                box.desiredX = x4;
+                                box.desiredY = y4;
+                                break;
+                        }
+                    }
+                }
+                if(!guessingIntroFinished){
+                    // Set up
+                    correctBox = random.nextInt(5); // The box with this ID will be correct
+                    synchronized (guessBoxes) {
+                        for (guessBox box : guessBoxes) {
+                            switch (box.id) {
+                                case 0:
+                                    box.desiredX = x0;
+                                    box.desiredY = y0;
+                                    box.posId = 0;
+                                    break;
+                                case 1:
+                                    box.desiredX = x1;
+                                    box.desiredY = y1;
+                                    box.posId = 1;
+                                    break;
+                                case 2:
+                                    box.desiredX = x2;
+                                    box.desiredY = y2;
+                                    box.posId = 2;
+                                    break;
+                                case 3:
+                                    box.desiredX = x3;
+                                    box.desiredY = y3;
+                                    box.posId = 3;
+                                    break;
+                                case 4:
+                                    box.desiredX = x4;
+                                    box.desiredY = y4;
+                                    box.posId = 4;
+                                    break;
+                            }
+                        }
+                        // Create guessing game intro
+                        synchronized (guessBoxes) {
+                            guessingIntroFinished = true;
+                            for (guessBox box : guessBoxes) {
+                                if (box.posX != box.desiredX || box.posY != box.desiredY) {
+                                    guessingIntroFinished = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else{
+                    // Main game
+                    if(swaps > 0){
+                        if(System.currentTimeMillis() - swapTimer >= 200){
+                            System.out.println("AAA");
+                            swapBoxes();
+                            swapTimer = System.currentTimeMillis();
+                        }
+                    }
+                    else{
+                        // Guessing stage
+                    }
+                }
         }
-        // Updating player animations
-        if(currentGameState != gameState.GAME_OVER){
-            if(playerAnimationState <= 0) {
-                playerSprite = GameCharacters.PLAYER.getSpriteSheet();
-            }
-            else if (playerAnimationState <= 1) {
-                playerSprite = GameCharacters.PLAYER_THROWING_3.getSpriteSheet();
-                playerAnimationState -= 0.1;
-            } else if (playerAnimationState <= 2) {
-                playerSprite = GameCharacters.PLAYER_THROWING_2.getSpriteSheet();
-                playerAnimationState -= 0.1;
-            } else if (playerAnimationState <= 3) {
-                playerSprite = GameCharacters.PLAYER_THROWING_1.getSpriteSheet();
-                playerAnimationState -= 0.1;
-            }
-        }
+
         render(delta);
     }
     private boolean isColliding(pizza pizza, patron patron) {
@@ -487,7 +649,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     synchronized (plates){
                         plates.clear();
                     }
-                    currentGameState = gameState.MAIN_MENU;
                     gameLoop.patronSpawnRate = 10;
                     if(score > highScore)
                         highScore = score;
@@ -578,7 +739,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             patrons.add(new patron(400, 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
         }
     }
-
     public void gameOver(int reason, double delta){
         playAudioGameOver();
         currentGameState = gameState.GAME_OVER;
@@ -596,6 +756,61 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 gameOverReason = "A plate has fallen!";
                 break;
             default:
+                break;
+        }
+    }
+    public void swapBoxes(){
+        int type = random.nextInt(4);
+        switch(type){
+            case 0:
+                // Clockwise swap
+                synchronized (guessBoxes){
+                    for(guessBox box : guessBoxes){
+                        if(box.posId != 4){
+                            // Change desired positions
+                            if(box.posId<3){
+                                box.posId++;
+                            }
+                            else{
+                                box.posId = 0;
+                            }
+                        }
+                    }
+                }
+                break;
+            case 1:
+                // Counter-clockwise swap
+                synchronized (guessBoxes){
+                    for(guessBox box : guessBoxes){
+                        if(box.posId != 4){
+                            // Change desired positions
+                            if(box.posId>0){
+                                box.posId--;
+                            }
+                            else{
+                                box.posId = 3;
+                            }
+                        }
+                    }
+                }
+                break;
+            case 2:
+            case 3:
+                // Middle swap
+                boolean swap1 = false, swap2 = false;
+                int target = random.nextInt(4);
+                synchronized (guessBoxes){
+                    for(guessBox box : guessBoxes){
+                        if(box.posId == 4 && !swap1){
+                            box.posId = target;
+                            swap1 = true;
+                        }
+                        else if(box.posId == target && !swap2){
+                            box.posId = 4;
+                            swap2 = true;
+                        }
+                    }
+                }
                 break;
         }
     }

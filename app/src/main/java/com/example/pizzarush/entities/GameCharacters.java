@@ -14,6 +14,7 @@ public enum GameCharacters {
     PLAYER_THROWING_3(R.drawable.player_throwing_3),
     PIZZA(R.drawable.pizza),
     PLATE(R.drawable.plate),
+    PIZZABOX(R.drawable.pizzabox_temp),
     PATRON(R.drawable.patron_idle),
     PATRON_WALK1(R.drawable.patron_walk_1),
     PATRON_WALK2(R.drawable.patron_walk_2),
