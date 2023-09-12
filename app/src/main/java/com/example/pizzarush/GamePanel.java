@@ -24,6 +24,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     final private Paint textPaintBorder = new Paint();
     final private Paint textScorePaint = new Paint();
     final private Paint tutorialGrey = new Paint();
+    final private Paint blackPaint = new Paint();
     private SurfaceHolder holder;
     private Random random = new Random();
     private ArrayList<pizza> pizzas = new ArrayList<>();
@@ -32,6 +33,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<point> points = new ArrayList<>();
     private ArrayList<guessBox> guessBoxes = new ArrayList<>();
     private int patronSpeed = 5;
+    private int level = 1;
     private int playerPosition = 2;
     private double playerAnimationState = 0;
     private Bitmap playerSprite = GameCharacters.PLAYER.getSpriteSheet();
@@ -39,7 +41,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private int highScore = 0;
     private boolean hasMoved = false;
     private int newPosition = playerPosition;
-    // ------
     final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
     final private int pizzaWidth = GameCharacters.PIZZA.getSpriteSheet().getWidth();
     final private int emptyPlateWidth = GameCharacters.PLATE.getSpriteSheet().getWidth();
@@ -53,14 +54,24 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         MAIN_MENU,
         TUTORIAL,
         GUESSING,
+        GUESSING_INTO,
+        GUESSING_OUT
     }
-    private gameState currentGameState = gameState.GUESSING;
+    private gameState currentGameState = gameState.MAIN_MENU;
     int tutorialState = 0;
     boolean guessingIntroFinished = false;
     private long swapTimer = System.currentTimeMillis();
     int swaps = 20; // Swaps that must be done
     // 5 - slow, 10 - medium, 5 - faster
+    long introTimer = 0;
+    long animTimer = 0;
+    long graceTimer = 0;
     int correctBox = 2;
+    int guessAnswer = -1;
+    int timesCorrectGuess = 0;
+    int guessingIntroBlack = 0;
+    boolean blink = true;
+    boolean guessCorrect = false;
     boolean leftCheck = false;
     boolean rightCheck = false;
     int doubleCheck = 0;
@@ -91,6 +102,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
         tutorialGrey.setColor(Color.BLACK);
         tutorialGrey.setAlpha(125);
+
+        blackPaint.setColor(Color.BLACK);
+
         gameLoop = new GameLoop(this);
 
         guessBoxes.add(new guessBox(0));
@@ -279,8 +293,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 break;
             case GUESSING:
                 canvas.drawColor(Color.BLACK);
-                canvas.drawText("Click the correct box", 520, 750, textPaint);
-                int speed = 40;
+                if(guessAnswer == 5){
+                    if(guessCorrect){
+                        canvas.drawText("Correct! +2000 points!", 520, 750, textPaint);
+                    }
+                    else{
+                        canvas.drawText("Better luck next time", 520, 750, textPaint);
+                    }
+                }
+                else if(swaps <= 0)
+                    canvas.drawText("Tap the correct box", 520, 750, textPaint);
+                else
+                    canvas.drawText("Pay attention to the pizza", 520, 750, textPaint);
+
+                int speed = 30;
                 for(guessBox box : guessBoxes) {
                     canvas.drawBitmap(box.spriteSheet, box.posX, box.posY, null);
                     if(box.posX != box.desiredX){
@@ -304,6 +330,65 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                             box.posY -= speed;
                         }
                     }
+                }
+                break;
+            case GUESSING_INTO:
+                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+
+                // PATRONS
+                synchronized (patrons){
+                    for(patron patron : patrons){
+                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                    }
+                }
+                // PLATES
+                synchronized (plates){
+                    for(emptyPlate plate : plates){
+                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180-emptyPlateWidth/2, plate.emptyPlatePos, null);
+                    }
+                }
+                // PIZZAS
+                synchronized (pizzas) {
+                    for(pizza pizza : pizzas){
+                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180-pizzaWidth/2, pizza.pizzaPosition, null);
+                    }
+                }
+                // PLAYER
+                canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
+                canvas.drawText("Score :"+score, 10, 100, textScorePaint);
+
+                canvas.drawRect(0,0,screenWidth,guessingIntroBlack,blackPaint);
+                canvas.drawRect(0,screenHeight-guessingIntroBlack,screenWidth,screenHeight+1000,blackPaint);
+                canvas.drawText("Level "+level+" Complete!",530, 500, textPaint);
+                guessingIntroBlack+=7;
+                if(guessingIntroBlack >= 2500){
+                    clearEntities();
+                    graceTimer = System.currentTimeMillis();
+                    guessingIntroBlack = 0;
+                    currentGameState = gameState.GUESSING;
+                }
+                break;
+            case GUESSING_OUT:
+                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+                canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
+
+                if(System.currentTimeMillis() - graceTimer < 5000){
+                    if((System.currentTimeMillis() - graceTimer)%100 == 0){ // TODO (it broken
+                        blink = !blink;
+                    }
+                    if(blink){
+                        canvas.drawText("LEVEL "+level,600, 500, textPaint);
+                    }
+                }
+                else{
+                    gameLoop.patronSpawnRate = 5+level*5;
+                    currentGameState = gameState.ACTIVE;
                 }
                 break;
         }
@@ -442,108 +527,163 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         playerAnimationState -= 0.1;
                     }
                 }
+                if(score >= level*1500+timesCorrectGuess*2000){
+                    currentGameState = gameState.GUESSING_INTO;
+                }
                 break;
             case GUESSING:
                 // currentTime is already updated every update();
-
-                int x0 = screenWidth/5-guessBoxWidth;
-                int y0 = screenHeight/3+guessBoxWidth;
-
-                int x1 = screenWidth-screenWidth/5-guessBoxWidth;
-                int y1 = screenHeight/3+guessBoxWidth;
-
-                int x2 = screenWidth-screenWidth/5-guessBoxWidth;
-                int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                int x3 = screenWidth/5-guessBoxWidth;
-                int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                int x4 = screenWidth/2-guessBoxWidth;
-                int y4 = screenHeight/2+guessBoxWidth;
-
-                // Updating desired positions based off of posID
-                synchronized (guessBoxes) {
-                    for (guessBox box : guessBoxes) {
-                        switch (box.posId) {
-                            case 0:
-                                box.desiredX = x0;
-                                box.desiredY = y0;
+                if(System.currentTimeMillis() - graceTimer > 4000 && guessAnswer == 5){
+                    level++;
+                    guessAnswer = -1;
+                    guessCorrect = false;
+                    swaps = 20;
+                    guessingIntroFinished = false;
+                    graceTimer = System.currentTimeMillis();
+                    currentGameState = gameState.GUESSING_OUT;
+                }
+                else if(guessAnswer == 5){
+                    boxAnimation();
+                }
+                else if(guessAnswer>=0){
+                    synchronized (guessBoxes){
+                        for(guessBox box : guessBoxes){
+                            if(box.posId == guessAnswer && box.id == correctBox){
+                                guessCorrect = true;
+                                synchronized (points){
+                                    timesCorrectGuess++;
+                                    points.add(new point(500,700,2000));
+                                }
                                 break;
-                            case 1:
-                                box.desiredX = x1;
-                                box.desiredY = y1;
-                                break;
-                            case 2:
-                                box.desiredX = x2;
-                                box.desiredY = y2;
-                                break;
-                            case 3:
-                                box.desiredX = x3;
-                                box.desiredY = y3;
-                                break;
-                            case 4:
-                                box.desiredX = x4;
-                                box.desiredY = y4;
-                                break;
+                            }
                         }
                     }
+                    guessAnswer = 5;
+                    graceTimer = System.currentTimeMillis();
+                    introTimer = System.currentTimeMillis();
+                    animTimer = System.currentTimeMillis();
                 }
-                if(!guessingIntroFinished){
-                    // Set up
-                    correctBox = random.nextInt(5); // The box with this ID will be correct
+                else{
+                    int x0 = screenWidth/5-guessBoxWidth;
+                    int y0 = screenHeight/3+guessBoxWidth;
+
+                    int x1 = screenWidth-screenWidth/5-guessBoxWidth;
+                    int y1 = screenHeight/3+guessBoxWidth;
+
+                    int x2 = screenWidth-screenWidth/5-guessBoxWidth;
+                    int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                    int x3 = screenWidth/5-guessBoxWidth;
+                    int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                    int x4 = screenWidth/2-guessBoxWidth;
+                    int y4 = screenHeight/2+guessBoxWidth;
+
+                    // Updating desired positions based off of posID
                     synchronized (guessBoxes) {
                         for (guessBox box : guessBoxes) {
-                            switch (box.id) {
+                            switch (box.posId) {
                                 case 0:
                                     box.desiredX = x0;
                                     box.desiredY = y0;
-                                    box.posId = 0;
                                     break;
                                 case 1:
                                     box.desiredX = x1;
                                     box.desiredY = y1;
-                                    box.posId = 1;
                                     break;
                                 case 2:
                                     box.desiredX = x2;
                                     box.desiredY = y2;
-                                    box.posId = 2;
                                     break;
                                 case 3:
                                     box.desiredX = x3;
                                     box.desiredY = y3;
-                                    box.posId = 3;
                                     break;
                                 case 4:
                                     box.desiredX = x4;
                                     box.desiredY = y4;
-                                    box.posId = 4;
                                     break;
                             }
                         }
-                        // Create guessing game intro
+                    }
+                    if(!guessingIntroFinished){
+                        // Set up
+                        correctBox = random.nextInt(5); // The box with this ID will be correct
                         synchronized (guessBoxes) {
-                            guessingIntroFinished = true;
                             for (guessBox box : guessBoxes) {
-                                if (box.posX != box.desiredX || box.posY != box.desiredY) {
-                                    guessingIntroFinished = false;
-                                    break;
+                                box.spriteSheet = GameCharacters.PIZZABOX.getSpriteSheet();
+                                switch (box.id) {
+                                    case 0:
+                                        box.desiredX = x0;
+                                        box.desiredY = y0;
+                                        box.posId = 0;
+                                        break;
+                                    case 1:
+                                        box.desiredX = x1;
+                                        box.desiredY = y1;
+                                        box.posId = 1;
+                                        break;
+                                    case 2:
+                                        box.desiredX = x2;
+                                        box.desiredY = y2;
+                                        box.posId = 2;
+                                        break;
+                                    case 3:
+                                        box.desiredX = x3;
+                                        box.desiredY = y3;
+                                        box.posId = 3;
+                                        break;
+                                    case 4:
+                                        box.desiredX = x4;
+                                        box.desiredY = y4;
+                                        box.posId = 4;
+                                        break;
+                                }
+                            }
+                            // Create guessing game intro
+                            synchronized (guessBoxes) {
+                                guessingIntroFinished = true;
+                                for (guessBox box : guessBoxes) {
+                                    if (box.posX != box.desiredX || box.posY != box.desiredY) {
+                                        guessingIntroFinished = false;
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-                else{
-                    // Main game
-                    if(swaps > 0){
-                        if(System.currentTimeMillis() - swapTimer >= 200){
-                            System.out.println("AAA");
-                            swapBoxes();
-                            swapTimer = System.currentTimeMillis();
-                        }
+                        introTimer = System.currentTimeMillis();
+                        animTimer = System.currentTimeMillis();
                     }
                     else{
-                        // Guessing stage
+                        if(System.currentTimeMillis() - introTimer < 4000){
+                            boxAnimation();
+                        }
+                        else if(System.currentTimeMillis() - introTimer < 5500){
+                            // Closing boxes
+                            synchronized (guessBoxes) {
+                                for (guessBox box : guessBoxes) {
+                                    if (System.currentTimeMillis() - animTimer <= 4200) {
+                                        if (box.id == correctBox)
+                                            box.spriteSheet = GameCharacters.PIZZABOX_CORRECT_1.getSpriteSheet();
+                                        else
+                                            box.spriteSheet = GameCharacters.PIZZABOX_INCORRECT_1.getSpriteSheet();
+                                    } else if (System.currentTimeMillis() - animTimer < 4250) {
+                                        box.spriteSheet = GameCharacters.PIZZABOX.getSpriteSheet();
+                                    }
+                                }
+                            }
+                        }
+                        else if(swaps > 0){
+                            // Main game
+                            if(System.currentTimeMillis() - swapTimer >= 300){
+                                swapBoxes();
+                                swapTimer = System.currentTimeMillis();
+                                swaps--;
+                            }
+                        }
+                        else{
+                            // Guessing stage
+                        }
                     }
                 }
         }
@@ -640,22 +780,61 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 break;
             case GAME_OVER:
                 if(event.getAction() == MotionEvent.ACTION_UP){
-                    synchronized (pizzas) {
-                        pizzas.clear();
-                    }
-                    synchronized (patrons) {
-                        patrons.clear();
-                    }
-                    synchronized (plates){
-                        plates.clear();
-                    }
+                    clearEntities();
                     gameLoop.patronSpawnRate = 10;
                     if(score > highScore)
                         highScore = score;
                     score = 0;
+                    currentGameState = gameState.ACTIVE;
                 }
                 break;
+            case GUESSING:
+                if(swaps <= 0){
+                    // Player will guess
+                    if(event.getAction() == MotionEvent.ACTION_UP){
+                        float x = event.getX();
+                        float y = event.getY();
 
+                        int x0 = screenWidth/5-guessBoxWidth;
+                        int y0 = screenHeight/3+guessBoxWidth;
+
+                        int x1 = screenWidth-screenWidth/5-guessBoxWidth;
+                        int y1 = screenHeight/3+guessBoxWidth;
+
+                        int x2 = screenWidth-screenWidth/5-guessBoxWidth;
+                        int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                        int x3 = screenWidth/5-guessBoxWidth;
+                        int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
+
+                        int x4 = screenWidth/2-guessBoxWidth;
+                        int y4 = screenHeight/2+guessBoxWidth;
+
+                        if(guessAnswer<0){
+                            if(x>=x0 && x<=x0+guessBoxWidth && y>=y0 && y<=y0+guessBoxWidth){
+                                guessAnswer = 0;
+                                System.out.println("Answer: "+guessAnswer);
+                            }
+                            else if(x>=x1 && x<=x1+guessBoxWidth && y>=y1 && y<=y1+guessBoxWidth){
+                                guessAnswer = 1;
+                                System.out.println("Answer: "+guessAnswer);
+                            }
+                            else if(x>=x2 && x<=x2+guessBoxWidth && y>=y2 && y<=y2+guessBoxWidth){
+                                guessAnswer = 2;
+                                System.out.println("Answer: "+guessAnswer);
+                            }
+                            else if(x>=x3 && x<=x3+guessBoxWidth && y>=y3 && y<=y3+guessBoxWidth){
+                                guessAnswer = 3;
+                                System.out.println("Answer: "+guessAnswer);
+                            }
+                            else if(x>=x4 && x<=x4+guessBoxWidth && y>=y4 && y<=y4+guessBoxWidth) {
+                                guessAnswer = 4;
+                                System.out.println("Answer: " + guessAnswer);
+                            }
+                        }
+                    }
+                }
+                break;
             default:
 
                 break;
@@ -666,7 +845,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         int pizzaAislePosition = playerPosition; // X
         int pizzaSpeed = 10;
         int pizzaPosition = 1640; // Y
-        int pizzaSize = 100;
     }
     public class patron{
         private int patronPosition;
@@ -737,6 +915,17 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         }
         if(currentGameState == gameState.TUTORIAL && pattern == -1){
             patrons.add(new patron(400, 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
+        }
+    }
+    public void clearEntities(){
+        synchronized (pizzas) {
+            pizzas.clear();
+        }
+        synchronized (patrons) {
+            patrons.clear();
+        }
+        synchronized (plates){
+            plates.clear();
         }
     }
     public void gameOver(int reason, double delta){
@@ -812,6 +1001,24 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
                 break;
+        }
+    }
+    public void boxAnimation(){
+        // Opening boxes
+        synchronized (guessBoxes) {
+            for (guessBox box : guessBoxes) {
+                if (System.currentTimeMillis() - animTimer < 250) {
+                    if (box.id == correctBox)
+                        box.spriteSheet = GameCharacters.PIZZABOX_CORRECT_1.getSpriteSheet();
+                    else
+                        box.spriteSheet = GameCharacters.PIZZABOX_INCORRECT_1.getSpriteSheet();
+                } else if (System.currentTimeMillis() - animTimer < 500) {
+                    if (box.id == correctBox)
+                        box.spriteSheet = GameCharacters.PIZZABOX_CORRECT_2.getSpriteSheet();
+                    else
+                        box.spriteSheet = GameCharacters.PIZZABOX_INCORRECT_2.getSpriteSheet();
+                }
+            }
         }
     }
     public void playAudioHitPatron(){
