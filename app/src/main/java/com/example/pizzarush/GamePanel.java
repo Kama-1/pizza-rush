@@ -1,15 +1,19 @@
 package com.example.pizzarush;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.graphics.Color;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 
@@ -21,10 +25,20 @@ import java.util.Random;
 
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     final private Paint textPaint = new Paint();
+    final private Paint textPaintBlack = new Paint();
+    final private Paint textPaintHighscore = new Paint();
+    final private Paint banner = new Paint();
+    final private Paint paintGrey = new Paint();
     final private Paint textPaintBorder = new Paint();
     final private Paint textScorePaint = new Paint();
     final private Paint tutorialGrey = new Paint();
     final private Paint blackPaint = new Paint();
+    final private Paint menuBackgroundPaint = new Paint();
+    final private Paint paintRed = new Paint();
+    final private Paint paintBlue = new Paint();
+    final private Paint paintYellow = new Paint();
+
+    final private Paint buttonText = new Paint();
     private SurfaceHolder holder;
     private Random random = new Random();
     private ArrayList<pizza> pizzas = new ArrayList<>();
@@ -32,6 +46,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<emptyPlate> plates = new ArrayList<>();
     private ArrayList<point> points = new ArrayList<>();
     private ArrayList<guessBox> guessBoxes = new ArrayList<>();
+    private ArrayList<menuBG> menuPar = new ArrayList<>();
+    private int menuBGHeight = GameCharacters.TITLE_BG.getSpriteSheetNoScale().getHeight();
     private int patronSpeed = 5;
     private int level = 1;
     private int playerPosition = 2;
@@ -68,6 +84,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     long graceTimer = 0;
     int correctBox = 2;
     int guessAnswer = -1;
+    int chef_head_bob = 0;
+    boolean chef_head_bob_up = true;
     int timesCorrectGuess = 0;
     int guessingIntroBlack = 0;
     boolean blink = true;
@@ -76,8 +94,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     boolean rightCheck = false;
     int doubleCheck = 0;
     boolean finishedTutorial = false;
-    int screenWidth = 1280;
-    int screenHeight = 1920;
+    DisplayMetrics displayMetrics = new DisplayMetrics();
+    int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+    int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
     public GamePanel(Context context) {
         super(context);
@@ -88,6 +107,29 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         textPaint.setTextSize(75);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setStyle(Paint.Style.FILL);
+
+        textPaintBlack.setColor(Color.BLACK);
+        textPaintBlack.setTextAlign(Paint.Align.CENTER);
+        textPaintBlack.setStyle(Paint.Style.FILL);
+        textPaintBlack.setTextSize(45);
+
+        banner.setColor(Color.argb(110,210,145,58));
+
+        paintRed.setColor(Color.rgb(233,61,52));
+        paintBlue.setColor(Color.rgb(65,131,255));
+        paintYellow.setColor(Color.rgb(247,153,38));
+
+        paintGrey.setColor(Color.LTGRAY);
+
+        buttonText.setColor(Color.BLACK);
+        buttonText.setTextAlign(Paint.Align.CENTER);
+        buttonText.setTextSize(90);
+        buttonText.setStyle(Paint.Style.FILL);
+
+        textPaintHighscore.setColor(Color.BLACK);
+        textPaintHighscore.setTextSize(75);
+        textPaintHighscore.setTextAlign(Paint.Align.CENTER);
+        textPaintHighscore.setStyle(Paint.Style.FILL);
 
         textPaintBorder.setStyle(Paint.Style.STROKE);
         textPaintBorder.setTextSize(75);
@@ -102,6 +144,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
         tutorialGrey.setColor(Color.BLACK);
         tutorialGrey.setAlpha(125);
+        System.out.println("ScreenHeight: "+screenHeight);
+        System.out.println("ScreenWidth: "+screenWidth);
+
+        menuBackgroundPaint.setColor(Color.parseColor("#FFCF87"));
 
         blackPaint.setColor(Color.BLACK);
 
@@ -112,7 +158,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         guessBoxes.add(new guessBox(2));
         guessBoxes.add(new guessBox(3));
         guessBoxes.add(new guessBox(4));
-        spawnPatron(-1);
+        menuPar.add(new menuBG(-menuBGHeight));
+        menuPar.add(new menuBG(0));
+        menuPar.add(new menuBG(menuBGHeight));
+        menuPar.add(new menuBG(menuBGHeight*2));
+        menuPar.add(new menuBG(menuBGHeight*3));
+        menuPar.add(new menuBG(menuBGHeight*4));
+
     }
 
     public void render(double delta){
@@ -126,7 +178,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 switch(tutorialState){
                     case 0:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                         }
                         canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
                         canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
@@ -135,7 +187,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     case 1: // Throwing pizza
                         synchronized (pizzas) {
                             for(patron patron : patrons){
-                                canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                                canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                             }
                             for(pizza pizza : pizzas){
                                 canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180-pizzaWidth/2, pizza.pizzaPosition, null);
@@ -205,8 +257,40 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 break;
 
             case MAIN_MENU:
-                canvas.drawBitmap(GameCharacters.MAIN_MENU.getSpriteSheetNoScale(),0, 100, null);
-                canvas.drawText("HighScore: "+highScore, 520, 1600, textPaint);
+                canvas.drawRect(0,0,screenWidth,screenHeight, menuBackgroundPaint);
+                // Pizzas
+                ArrayList<menuBG> toRemoveSlides = new ArrayList();
+                int minSlides = 0;
+                synchronized (menuPar){
+                    for(menuBG slide : menuPar){
+                        canvas.drawBitmap(GameCharacters.TITLE_BG.getSpriteSheetNoScale(), 0, slide.posY, null);
+                        if(slide.posY < 0)
+                            minSlides++;
+                        if(slide.posY >= screenHeight)
+                            toRemoveSlides.add(slide);
+                        else
+                            slide.posY+=2;
+                    }
+                    if(minSlides==0){
+                        menuPar.add(new menuBG(-menuBGHeight));
+                        minSlides=0;
+                    }
+                    else
+                        minSlides=0;
+                    if(toRemoveSlides!=null){
+                        menuPar.removeAll(toRemoveSlides);
+                    }
+                }
+                // HighScore
+                canvas.drawRect(0,screenHeight/3,screenWidth,screenHeight/3+100, banner);
+                canvas.drawText("HighScore: "+highScore, screenWidth/2, screenHeight/3+75, textPaintHighscore);
+
+                // Buttons
+                drawButton("PLAY", 1000, paintRed, buttonText, canvas);
+                drawButton("CHALLENGES", 1300, paintYellow, buttonText, canvas);
+                drawButton("TUTORIAL", 1600, paintBlue, buttonText, canvas);
+
+                canvas.drawBitmap(GameCharacters.TITLE.getSpriteSheet(), screenWidth/2 - GameCharacters.TITLE.getSpriteSheet().getWidth()/2, 50, null);
                 break;
             case ACTIVE:
                 canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
@@ -218,7 +302,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 synchronized (patrons){
                     for(patron patron : patrons){
                         // canvas.drawRect(patron.patronAisle*360-240+patron.patronSize/2, patron.patronPosition, patron.patronAisle*360 - 240-patron.patronSize/2, patron.patronPosition+patron.patronSize, greenPaint);
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                         if(!patron.satisfied) {
                             patron.patronPosition += delta * patronSpeed * 60;
                             if (patron.patronPosition >= 1640)
@@ -267,7 +351,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                     }
                 }
                 // PLATES
@@ -288,24 +372,55 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawBitmap((GameCharacters.GAMEOVER_TEXT.getSpriteSheetNoScale()),0,800, null);
                 canvas.drawText(gameOverReason,540, 1100, textPaintBorder);
                 canvas.drawText(gameOverReason,540, 1100, textPaint);
-                canvas.drawText("Score: "+score, 520, 1200, textPaintBorder);
-                canvas.drawText("Score: "+score, 520, 1200, textPaint);
+                drawButton("MENU", 1700, paintRed, buttonText, canvas);
+                if(score>highScore){
+                    canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaintBorder);
+                    canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaint);
+                }
+                else{
+                    canvas.drawText("Score: "+score, 520, 1200, textPaintBorder);
+                    canvas.drawText("Score: "+score, 520, 1200, textPaint);
+                }
                 break;
             case GUESSING:
-                canvas.drawColor(Color.BLACK);
+                canvas.drawColor(Color.rgb(55,55,55));
+                canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(),screenWidth/2-screenWidth/8, 0, null);
+                canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(),screenWidth/2-screenWidth/8, chef_head_bob, null);
+                canvas.drawRect(0, screenHeight/3, screenWidth, screenHeight/2+screenHeight/6+guessBoxWidth*2, paintGrey);
+                canvas.drawBitmap(GameCharacters.SPEECH.getSpriteSheet2xScale(), 0, 100, null);
                 if(guessAnswer == 5){
                     if(guessCorrect){
-                        canvas.drawText("Correct! +2000 points!", 520, 750, textPaint);
+                        canvas.drawText("Correct! +2000 points!", GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth()/2, GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight()/2+100, textPaintBlack);
+                        if(chef_head_bob_up){
+                            if(chef_head_bob >= 10)
+                                chef_head_bob_up = false;
+                            chef_head_bob++;
+                        }
+                        else{
+                            if(chef_head_bob <=-10)
+                                chef_head_bob_up = true;
+                            chef_head_bob--;
+                        }
                     }
                     else{
-                        canvas.drawText("Better luck next time", 520, 750, textPaint);
+                        canvas.drawText("Better luck next time", GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth()/2, GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight()/2+100, textPaintBlack);
+                        if(chef_head_bob_up){
+                            if(chef_head_bob >= 10)
+                                chef_head_bob_up = false;
+                            chef_head_bob++;
+                        }
+                        else{
+                            if(chef_head_bob <=-10)
+                                chef_head_bob_up = true;
+                            chef_head_bob--;
+                        }
                     }
                 }
                 else if(swaps <= 0)
-                    canvas.drawText("Tap the correct box", 520, 750, textPaint);
-                else
-                    canvas.drawText("Pay attention to the pizza", 520, 750, textPaint);
-
+                    canvas.drawText("Tap the correct box", GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth()/2, GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight()/2+100, textPaintBlack);
+                else {
+                    canvas.drawText("Pay attention to the pizza", GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth() / 2, GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight() / 2 + 100, textPaintBlack);
+                }
                 int speed = 30;
                 for(guessBox box : guessBoxes) {
                     canvas.drawBitmap(box.spriteSheet, box.posX, box.posY, null);
@@ -341,7 +456,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-260+patron.patronSize/2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                     }
                 }
                 // PLATES
@@ -378,12 +493,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
                 canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
 
-                if(System.currentTimeMillis() - graceTimer < 5000){
-                    if((System.currentTimeMillis() - graceTimer)%100 == 0){ // TODO (it broken
+                if(System.currentTimeMillis() - graceTimer < 3500){
+                    if((System.currentTimeMillis() - graceTimer)%200 <= 4){
                         blink = !blink;
                     }
                     if(blink){
-                        canvas.drawText("LEVEL "+level,600, 500, textPaint);
+                        canvas.drawText("GET READY TO SERVE",500, 500, textPaint);
                     }
                 }
                 else{
@@ -527,7 +642,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                         playerAnimationState -= 0.1;
                     }
                 }
-                if(score >= level*1500+timesCorrectGuess*2000){
+                if(score >= Math.pow(level, 2)*1500+timesCorrectGuess*2000){
                     currentGameState = gameState.GUESSING_INTO;
                 }
                 break;
@@ -564,20 +679,21 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     animTimer = System.currentTimeMillis();
                 }
                 else{
-                    int x0 = screenWidth/5-guessBoxWidth;
-                    int y0 = screenHeight/3+guessBoxWidth;
-
-                    int x1 = screenWidth-screenWidth/5-guessBoxWidth;
-                    int y1 = screenHeight/3+guessBoxWidth;
-
-                    int x2 = screenWidth-screenWidth/5-guessBoxWidth;
-                    int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                    int x3 = screenWidth/5-guessBoxWidth;
-                    int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                    int x4 = screenWidth/2-guessBoxWidth;
-                    int y4 = screenHeight/2+guessBoxWidth;
+                    // Top Left
+                    int x0 = screenWidth/5-guessBoxWidth/2;
+                    int y0 = screenHeight/3+guessBoxWidth/2;
+                    // Top Right
+                    int x1 = screenWidth-screenWidth/5-guessBoxWidth/2;
+                    int y1 = screenHeight/3+guessBoxWidth/2;
+                    // Bottom Right
+                    int x2 = screenWidth-screenWidth/5-guessBoxWidth/2;
+                    int y2 = screenHeight/2+screenHeight/6+guessBoxWidth/2;
+                    // Bottom Left
+                    int x3 = screenWidth/5-guessBoxWidth/2;
+                    int y3 = screenHeight/2+screenHeight/6+guessBoxWidth/2;
+                    // Middle
+                    int x4 = screenWidth/2-guessBoxWidth/2;
+                    int y4 = screenHeight/2+guessBoxWidth/2;
 
                     // Updating desired positions based off of posID
                     synchronized (guessBoxes) {
@@ -736,7 +852,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     case 6:
                         if(event.getAction() == MotionEvent.ACTION_UP) {
                             if (finishedTutorial)
-                                currentGameState = gameState.MAIN_MENU;
+                                currentGameState = gameState.ACTIVE;
                             else finishedTutorial = true;
                         }
                         break;
@@ -744,7 +860,21 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 break;
             case MAIN_MENU:
                 if(event.getAction() == MotionEvent.ACTION_UP){
-                    currentGameState = gameState.ACTIVE;
+                    if(event.getX()>=screenWidth/5 && event.getX()<screenWidth-screenWidth/5){
+                        // PLAY
+                        if(event.getY()>1000 && event.getY()<1200)
+                            currentGameState = gameState.ACTIVE;
+
+                        // CHALLENGES
+
+
+                        // TUTORIAL
+                        if(event.getY()>1600 && event.getY()<1800) {
+                            tutorialState = 0;
+                            spawnPatron(-1);
+                            currentGameState = gameState.TUTORIAL;
+                        }
+                    }
                 }
                 break;
             case ACTIVE:
@@ -780,12 +910,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 break;
             case GAME_OVER:
                 if(event.getAction() == MotionEvent.ACTION_UP){
-                    clearEntities();
-                    gameLoop.patronSpawnRate = 10;
-                    if(score > highScore)
-                        highScore = score;
-                    score = 0;
-                    currentGameState = gameState.ACTIVE;
+                    if(event.getX()>=screenWidth/5 && event.getX()<=screenWidth-screenWidth/5 && event.getY() >= 1700 && event.getY() <= 1900){
+                        clearEntities();
+                        gameLoop.patronSpawnRate = 10;
+                        if(score > highScore)
+                            highScore = score;
+                        score = 0;
+                        currentGameState = gameState.MAIN_MENU;
+                    }
                 }
                 break;
             case GUESSING:
@@ -794,21 +926,21 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     if(event.getAction() == MotionEvent.ACTION_UP){
                         float x = event.getX();
                         float y = event.getY();
-
-                        int x0 = screenWidth/5-guessBoxWidth;
-                        int y0 = screenHeight/3+guessBoxWidth;
-
-                        int x1 = screenWidth-screenWidth/5-guessBoxWidth;
-                        int y1 = screenHeight/3+guessBoxWidth;
-
-                        int x2 = screenWidth-screenWidth/5-guessBoxWidth;
-                        int y2 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                        int x3 = screenWidth/5-guessBoxWidth;
-                        int y3 = screenHeight/2+screenHeight/6+guessBoxWidth;
-
-                        int x4 = screenWidth/2-guessBoxWidth;
-                        int y4 = screenHeight/2+guessBoxWidth;
+                        // Top Left
+                        int x0 = screenWidth/5-guessBoxWidth/2;
+                        int y0 = screenHeight/3+guessBoxWidth/2;
+                        // Top Right
+                        int x1 = screenWidth-screenWidth/5-guessBoxWidth/2;
+                        int y1 = screenHeight/3+guessBoxWidth/2;
+                        // Bottom Right
+                        int x2 = screenWidth-screenWidth/5-guessBoxWidth/2;
+                        int y2 = screenHeight/2+screenHeight/6+guessBoxWidth/2;
+                        // Bottom Left
+                        int x3 = screenWidth/5-guessBoxWidth/2;
+                        int y3 = screenHeight/2+screenHeight/6+guessBoxWidth/2;
+                        // Middle
+                        int x4 = screenWidth/2-guessBoxWidth/2;
+                        int y4 = screenHeight/2+guessBoxWidth/2;
 
                         if(guessAnswer<0){
                             if(x>=x0 && x<=x0+guessBoxWidth && y>=y0 && y<=y0+guessBoxWidth){
@@ -886,6 +1018,19 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             this.posX = posX;
         }
     }
+    public class menuBG{
+        int posY = -menuBGHeight;
+        public menuBG(int posY){
+            this.posY = posY;
+        }
+    }
+    public void drawButton(String text, int posY, Paint colour, Paint textColour, Canvas canvas){
+        int widthLeft = screenWidth/5;
+        int widthRight = screenWidth - screenWidth/5;
+        int height = 200;
+        canvas.drawRect(widthLeft, posY, widthRight, posY+height, colour);
+        canvas.drawText(text, widthLeft+(widthRight-widthLeft)/2, posY+125, textColour);
+    }
     public void spawnPatron(int pattern){
         if(currentGameState == gameState.ACTIVE) {
             synchronized (patrons) {
@@ -913,7 +1058,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 }
             }
         }
-        if(currentGameState == gameState.TUTORIAL && pattern == -1){
+        if(pattern == -1){
             patrons.add(new patron(400, 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
         }
     }
