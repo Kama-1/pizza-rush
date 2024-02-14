@@ -1,6 +1,7 @@
 package com.example.pizzarush;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -12,18 +13,18 @@ import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.graphics.Color;
-import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 
 import com.example.pizzarush.entities.GameCharacters;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
+public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
+    SharedPreferences save = getContext().getSharedPreferences("saveState",0);
     final private Paint textPaint = new Paint();
     final private Paint textPaintBlack = new Paint();
     final private Paint textPaintHighscore = new Paint();
@@ -49,12 +50,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private ArrayList<menuBG> menuPar = new ArrayList<>();
     private int menuBGHeight = GameCharacters.TITLE_BG.getSpriteSheetNoScale().getHeight();
     private int patronSpeed = 5;
-    private int level = 1;
+    private int level = 0;
     private int playerPosition = 2;
     private double playerAnimationState = 0;
     private Bitmap playerSprite = GameCharacters.PLAYER.getSpriteSheet();
     private int score = 0;
-    private int highScore = 0;
+    private int highScore = save.getInt("highscore",0);
     private boolean hasMoved = false;
     private int newPosition = playerPosition;
     final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
@@ -97,6 +98,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     DisplayMetrics displayMetrics = new DisplayMetrics();
     int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+
+
+
 
     public GamePanel(Context context) {
         super(context);
@@ -341,6 +345,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
                 canvas.drawText("Score :"+score, 10, 100, textScorePaint);
+                canvas.drawText("Level :"+level, 10, 300, textScorePaint); // TODO (take down)
                 break;
             case GAME_OVER:
                 canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
@@ -374,6 +379,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawText(gameOverReason,540, 1100, textPaint);
                 drawButton("MENU", 1700, paintRed, buttonText, canvas);
                 if(score>highScore){
+
+
                     canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaintBorder);
                     canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaint);
                 }
@@ -477,7 +484,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
                 canvas.drawRect(0,0,screenWidth,guessingIntroBlack,blackPaint);
                 canvas.drawRect(0,screenHeight-guessingIntroBlack,screenWidth,screenHeight+1000,blackPaint);
-                canvas.drawText("Level "+level+" Complete!",530, 500, textPaint);
+                canvas.drawText("Level "+(level-1)+" Complete!",530, 500, textPaint);
                 guessingIntroBlack+=7;
                 if(guessingIntroBlack >= 2500){
                     clearEntities();
@@ -643,13 +650,15 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
                 if(score >= Math.pow(level, 2)*1500+timesCorrectGuess*2000){
+                    level++;
+                    SharedPreferences.Editor editor = save.edit();
+                    editor.putInt("level",level).commit();
                     currentGameState = gameState.GUESSING_INTO;
                 }
                 break;
             case GUESSING:
                 // currentTime is already updated every update();
                 if(System.currentTimeMillis() - graceTimer > 4000 && guessAnswer == 5){
-                    level++;
                     guessAnswer = -1;
                     guessCorrect = false;
                     swaps = 20;
@@ -862,16 +871,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                 if(event.getAction() == MotionEvent.ACTION_UP){
                     if(event.getX()>=screenWidth/5 && event.getX()<screenWidth-screenWidth/5){
                         // PLAY
-                        if(event.getY()>1000 && event.getY()<1200)
+                        if(event.getY()>1000 && event.getY()<1200) {
+                            score = save.getInt("score", 0);
+                            level = save.getInt("level", 1);
                             currentGameState = gameState.ACTIVE;
+                        }
 
                         // CHALLENGES
 
 
                         // TUTORIAL
-                        if(event.getY()>1600 && event.getY()<1800) {
+                        else if(event.getY()>1600 && event.getY()<1800) {
                             tutorialState = 0;
                             spawnPatron(-1);
+                            playerPosition = 2;
                             currentGameState = gameState.TUTORIAL;
                         }
                     }
@@ -913,8 +926,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
                     if(event.getX()>=screenWidth/5 && event.getX()<=screenWidth-screenWidth/5 && event.getY() >= 1700 && event.getY() <= 1900){
                         clearEntities();
                         gameLoop.patronSpawnRate = 10;
-                        if(score > highScore)
+                        if(score > highScore) {
                             highScore = score;
+                            SharedPreferences.Editor editor = save.edit();
+                            editor.putInt("highscore", score).commit();
+                        }
                         score = 0;
                         currentGameState = gameState.MAIN_MENU;
                     }
@@ -1016,6 +1032,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
             score += pointsGiven;
             this.posY = posY;
             this.posX = posX;
+            SharedPreferences.Editor editor = save.edit();
+            editor.putInt("score",score).commit();
         }
     }
     public class menuBG{
@@ -1075,6 +1093,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     }
     public void gameOver(int reason, double delta){
         playAudioGameOver();
+        save.edit().remove("score").commit();
+        save.edit().remove("level").commit();
+        System.out.println("Wiped cache data");
+
         currentGameState = gameState.GAME_OVER;
         switch (reason){
             case 0:
