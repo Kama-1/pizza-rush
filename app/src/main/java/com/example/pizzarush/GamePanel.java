@@ -18,7 +18,6 @@ import androidx.annotation.NonNull;
 
 import com.example.pizzarush.entities.GameCharacters;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,35 +25,48 @@ import java.util.Random;
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     SharedPreferences save = getContext().getSharedPreferences("saveState",0);
     final private Paint textPaint = new Paint();
+    final private Paint paintChallengeIncomplete = new Paint();
+    final private Paint textChallengeTitle2 = new Paint();
+    final private Paint textChallengeDesc = new Paint();
+    final private Paint paintChallengeComplete = new Paint();
     final private Paint textPaintBlack = new Paint();
     final private Paint textPaintHighscore = new Paint();
     final private Paint banner = new Paint();
     final private Paint paintGrey = new Paint();
+    final private Paint textToMenu = new Paint();
     final private Paint textPaintBorder = new Paint();
     final private Paint textScorePaint = new Paint();
+    final private Paint textScoreLevel = new Paint();
+    final private Paint textChallengeTitle = new Paint();
     final private Paint tutorialGrey = new Paint();
     final private Paint blackPaint = new Paint();
     final private Paint menuBackgroundPaint = new Paint();
     final private Paint paintRed = new Paint();
     final private Paint paintBlue = new Paint();
     final private Paint paintYellow = new Paint();
+    final private Paint paintGreen = new Paint();
+    final private Paint paintDarkGrey = new Paint();
 
     final private Paint buttonText = new Paint();
     private SurfaceHolder holder;
     private Random random = new Random();
     private ArrayList<pizza> pizzas = new ArrayList<>();
     private ArrayList<patron> patrons = new ArrayList();
+    private ArrayList<challenge> challenges = new ArrayList();
     private ArrayList<emptyPlate> plates = new ArrayList<>();
     private ArrayList<point> points = new ArrayList<>();
     private ArrayList<guessBox> guessBoxes = new ArrayList<>();
     private ArrayList<menuBG> menuPar = new ArrayList<>();
     private int menuBGHeight = GameCharacters.TITLE_BG.getSpriteSheetNoScale().getHeight();
     private int patronSpeed = 5;
-    private int level = 0;
+    private int level = save.getInt("level",1);
     private int playerPosition = 2;
     private double playerAnimationState = 0;
     private Bitmap playerSprite = GameCharacters.PLAYER.getSpriteSheet();
-    private int score = 0;
+    private int score = save.getInt("score", 0);;
+    int timesCorrectGuess = save.getInt("timesCorrectGuess",0);
+    private int scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+    private int prevScore = (int) Math.pow(level-1, 2)*1500+timesCorrectGuess*2000;
     private int highScore = save.getInt("highscore",0);
     private boolean hasMoved = false;
     private int newPosition = playerPosition;
@@ -70,6 +82,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         GAME_OVER,
         MAIN_MENU,
         TUTORIAL,
+        CHALLENGES,
         GUESSING,
         GUESSING_INTO,
         GUESSING_OUT
@@ -87,7 +100,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     int guessAnswer = -1;
     int chef_head_bob = 0;
     boolean chef_head_bob_up = true;
-    int timesCorrectGuess = 0;
     int guessingIntroBlack = 0;
     boolean blink = true;
     boolean guessCorrect = false;
@@ -95,7 +107,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     boolean rightCheck = false;
     int doubleCheck = 0;
     boolean finishedTutorial = false;
-    DisplayMetrics displayMetrics = new DisplayMetrics();
     int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
@@ -104,6 +115,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
     public GamePanel(Context context) {
         super(context);
+
+        paintChallengeComplete.setColor(Color.LTGRAY);
+        paintChallengeComplete.setAlpha(125);
+
+        paintChallengeIncomplete.setColor(Color.DKGRAY);
+        paintChallengeIncomplete.setAlpha(125);
+
+        textChallengeTitle2.setColor(Color.WHITE);
+        textChallengeTitle2.setTextSize(100);
+        textChallengeTitle2.setTextAlign(Paint.Align.LEFT);
+
+        textChallengeDesc.setColor(Color.WHITE);
+        textChallengeDesc.setTextSize(50);
+        textChallengeDesc.setTextAlign(Paint.Align.LEFT);
 
         holder = getHolder();
         holder.addCallback(this);
@@ -117,13 +142,23 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         textPaintBlack.setStyle(Paint.Style.FILL);
         textPaintBlack.setTextSize(45);
 
+        textChallengeTitle.setColor(Color.WHITE);
+        textChallengeTitle.setTextAlign(Paint.Align.CENTER);
+        textChallengeTitle.setTextSize(150);
+
+        textToMenu.setColor(Color.WHITE);
+        textToMenu.setTextAlign(Paint.Align.CENTER);
+        textToMenu.setTextSize(100);
+
         banner.setColor(Color.argb(110,210,145,58));
 
         paintRed.setColor(Color.rgb(233,61,52));
         paintBlue.setColor(Color.rgb(65,131,255));
         paintYellow.setColor(Color.rgb(247,153,38));
+        paintGreen.setColor((Color.rgb(134, 244, 87)));
 
         paintGrey.setColor(Color.LTGRAY);
+        paintDarkGrey.setColor(Color.rgb(55,55,55));
 
         buttonText.setColor(Color.BLACK);
         buttonText.setTextAlign(Paint.Align.CENTER);
@@ -143,8 +178,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
         textScorePaint.setColor(Color.WHITE);
         textScorePaint.setTextSize(75);
-        textScorePaint.setTextAlign(Paint.Align.LEFT);
+        textScorePaint.setTextAlign(Paint.Align.CENTER);
         textScorePaint.setStyle(Paint.Style.FILL);
+
+        textScoreLevel.setColor(Color.WHITE);
+        textScoreLevel.setTextSize(60);
+        textScoreLevel.setTextAlign(Paint.Align.CENTER);
+        textScoreLevel.setStyle(Paint.Style.FILL);
 
         tutorialGrey.setColor(Color.BLACK);
         tutorialGrey.setAlpha(125);
@@ -290,7 +330,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawText("HighScore: "+highScore, screenWidth/2, screenHeight/3+75, textPaintHighscore);
 
                 // Buttons
-                drawButton("PLAY", 1000, paintRed, buttonText, canvas);
+                if (score!=0)
+                    drawButton("CONTINUE", 1000, paintGreen, buttonText, canvas);
+                else
+                    drawButton("PLAY", 1000, paintRed, buttonText, canvas);
                 drawButton("CHALLENGES", 1300, paintYellow, buttonText, canvas);
                 drawButton("TUTORIAL", 1600, paintBlue, buttonText, canvas);
 
@@ -305,7 +348,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        // canvas.drawRect(patron.patronAisle*360-240+patron.patronSize/2, patron.patronPosition, patron.patronAisle*360 - 240-patron.patronSize/2, patron.patronPosition+patron.patronSize, greenPaint);
                         canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+patron.patronSize/2, patron.patronPosition, null);
                         if(!patron.satisfied) {
                             patron.patronPosition += delta * patronSpeed * 60;
@@ -334,6 +376,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             gameOver(0, delta);
                     }
                 }
+                canvas.drawRect(25,50, screenWidth-25, 100, paintGrey);
+                canvas.drawRect(25,50, (int)( (double) (score-prevScore)/(scoreToNextLevel-prevScore)*(screenWidth-50)+25), 100, paintYellow);
+                // For testing purposes
+                canvas.drawText("PrevScore: "+prevScore,100,400,textPaintBlack);
+                canvas.drawText("scoreToNextLevel: "+scoreToNextLevel,100,450,textPaintBlack);
+                canvas.drawText("correctGuessing: "+timesCorrectGuess,100,500,textPaintBlack);
                 // PLAYER
                 canvas.drawBitmap(playerSprite, playerPosition*360-180-playerWidth/2, 1640, null);
                 // POINTS
@@ -344,8 +392,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         point.framesAlive++;
                     }
                 }
-                canvas.drawText("Score :"+score, 10, 100, textScorePaint);
-                canvas.drawText("Level :"+level, 10, 300, textScorePaint); // TODO (take down)
+                canvas.drawText("Score: "+score, screenWidth/2, 175, textScorePaint);
+                canvas.drawText("Level "+level, screenWidth/2, 100, textScoreLevel);
                 break;
             case GAME_OVER:
                 canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
@@ -390,7 +438,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 }
                 break;
             case GUESSING:
-                canvas.drawColor(Color.rgb(55,55,55));
+                canvas.drawRect(0,0,screenWidth,screenHeight,paintDarkGrey);
                 canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(),screenWidth/2-screenWidth/8, 0, null);
                 canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(),screenWidth/2-screenWidth/8, chef_head_bob, null);
                 canvas.drawRect(0, screenHeight/3, screenWidth, screenHeight/2+screenHeight/6+guessBoxWidth*2, paintGrey);
@@ -509,9 +557,37 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     }
                 }
                 else{
-                    gameLoop.patronSpawnRate = 5+level*5;
+                    prevScore = (int) Math.pow(level-1, 2)*1500+timesCorrectGuess*2000;
+                    scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+
+                    gameLoop.patronSpawnRate = level*5;
                     currentGameState = gameState.ACTIVE;
                 }
+                break;
+            case CHALLENGES:
+                canvas.drawRect(0,0,screenWidth,screenHeight,paintDarkGrey);
+                canvas.drawRect(0,0,screenWidth,150,paintGreen);
+                canvas.drawText("<- Main Menu",screenWidth/2,100,textToMenu);
+                canvas.drawText("CHALLENGES", screenWidth/2, 300, textChallengeTitle);
+
+                // print challenges
+                int offset = 400;
+                synchronized (challenges){
+                    for(challenge challenge : challenges){
+                        canvas.drawBitmap(challenge.image,0,offset,null);
+                        canvas.drawText(challenge.title, 20, offset+100,textChallengeTitle2);
+                        canvas.drawText(challenge.desc, 20, offset+200,textChallengeDesc);
+                        if(challenge.complete) {
+                            canvas.drawRect(0, offset, screenWidth, offset+250, paintChallengeComplete);
+                            // canvas.drawRect(1000,offset+50,900,offset+150,paintYellow); // TODO create star
+                        }
+                        else
+                            canvas.drawRect(0, offset, screenWidth, offset+250, paintChallengeIncomplete);
+                        offset+=350;
+                    }
+                }
+
+
                 break;
         }
 
@@ -649,10 +725,15 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         playerAnimationState -= 0.1;
                     }
                 }
-                if(score >= Math.pow(level, 2)*1500+timesCorrectGuess*2000){
-                    level++;
+                if(score >= scoreToNextLevel){
                     SharedPreferences.Editor editor = save.edit();
+                    prevScore = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+                    level++;
+                    scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+                    editor.putInt("scoreToNextLevel", scoreToNextLevel);
                     editor.putInt("level",level).commit();
+                    System.out.println(score);
+                    System.out.println(scoreToNextLevel);
                     currentGameState = gameState.GUESSING_INTO;
                 }
                 break;
@@ -676,6 +757,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                                 guessCorrect = true;
                                 synchronized (points){
                                     timesCorrectGuess++;
+                                    SharedPreferences.Editor editor = save.edit();
+                                    editor.putInt("timesCorrectGuess", timesCorrectGuess).commit();
                                     points.add(new point(500,700,2000));
                                 }
                                 break;
@@ -872,13 +955,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     if(event.getX()>=screenWidth/5 && event.getX()<screenWidth-screenWidth/5){
                         // PLAY
                         if(event.getY()>1000 && event.getY()<1200) {
-                            score = save.getInt("score", 0);
                             level = save.getInt("level", 1);
+                            gameLoop.patronSpawnRate = level*5;
                             currentGameState = gameState.ACTIVE;
                         }
 
                         // CHALLENGES
-
+                        if(event.getY()>1400 && event.getY()<1600){
+                            // adding challenges
+                            synchronized (challenges){
+                                challenges.add(new challenge("Laser Focused", "Guess the correct box 20 times",GameCharacters.CHALLENGE_LASER.getSpriteSheet10xScale(), false));
+                                challenges.add(new challenge("Schrodinger's Pizza", "Guess the wrong box 10 times",GameCharacters.CHALLENGE_SCHRODINGER.getSpriteSheet10xScale(), true));
+                            }
+                            currentGameState = gameState.CHALLENGES;
+                        }
 
                         // TUTORIAL
                         else if(event.getY()>1600 && event.getY()<1800) {
@@ -925,7 +1015,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 if(event.getAction() == MotionEvent.ACTION_UP){
                     if(event.getX()>=screenWidth/5 && event.getX()<=screenWidth-screenWidth/5 && event.getY() >= 1700 && event.getY() <= 1900){
                         clearEntities();
-                        gameLoop.patronSpawnRate = 10;
+
                         if(score > highScore) {
                             highScore = score;
                             SharedPreferences.Editor editor = save.edit();
@@ -983,11 +1073,34 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     }
                 }
                 break;
+            case CHALLENGES:
+                if(event.getAction() == MotionEvent.ACTION_UP){
+                    if(event.getY()<150)
+                        synchronized (challenges){
+                        challenges.clear();
+                        }
+                        currentGameState = gameState.MAIN_MENU;
+                }
+
+
+                break;
             default:
 
                 break;
         }
         return true;
+    }
+    public class challenge{
+        String title;
+        String desc;
+         private Bitmap image;
+        boolean complete;
+        public challenge(String title, String desc, Bitmap image, boolean complete){
+            this.title = title;
+            this.desc = desc;
+            this.image = image;
+            this.complete = complete;
+        }
     }
     public class pizza{
         int pizzaAislePosition = playerPosition; // X
@@ -1033,7 +1146,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             this.posY = posY;
             this.posX = posX;
             SharedPreferences.Editor editor = save.edit();
-            editor.putInt("score",score).commit();
+             editor.putInt("score",score).commit();
         }
     }
     public class menuBG{
@@ -1051,6 +1164,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     }
     public void spawnPatron(int pattern){
         if(currentGameState == gameState.ACTIVE) {
+            // Making it so early levels are easier
+            if(level==1)
+                pattern = 0;
+            else if(level==2)
+                pattern = random.nextInt(2);
+
+
+            // Spawn Patterns
             synchronized (patrons) {
                 synchronized (patronSleep) {
                     int groupAisle = random.nextInt(3)+1;
@@ -1093,8 +1214,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     }
     public void gameOver(int reason, double delta){
         playAudioGameOver();
+        prevScore = 0;
+        timesCorrectGuess=0;
+        scoreToNextLevel = 1500;
         save.edit().remove("score").commit();
         save.edit().remove("level").commit();
+        save.edit().remove("timesCorrectGuess").commit();
         System.out.println("Wiped cache data");
 
         currentGameState = gameState.GAME_OVER;
