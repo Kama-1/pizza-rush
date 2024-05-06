@@ -31,26 +31,21 @@ public enum GameCharacters {
     GAMEOVER_TEXT(R.drawable.gameover_text),
     COUNTER(R.drawable.counter),
     SPEECH(R.drawable.speech_bubble),
-    CHALLENGE_LASER(R.drawable.challenge_laser),
-    CHALLENGE_SCHRODINGER(R.drawable.challenge_schrodinger),
     TITLE(R.drawable.title_pr),
     TITLE_BG(R.drawable.title_bg);
 
     private Bitmap spriteSheet;
-    private Bitmap spriteSheetNoScale;
+    private final Bitmap spriteSheetNoScale;
     private Bitmap spriteSheet2xScale;
-    private Bitmap spriteSheet10xScale;
-    private BitmapFactory.Options options = new BitmapFactory.Options();
+
     GameCharacters(int resID) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         spriteSheet = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheetNoScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheet2xScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheet = getScaledBitmap(spriteSheet, 5);
         spriteSheet2xScale = getScaledBitmap(spriteSheet2xScale, 2);
-
-        spriteSheet10xScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
-        spriteSheet10xScale = getScaledBitmap(spriteSheet10xScale, 10);
     }
 
     private Bitmap getScaledBitmap(Bitmap bitmap, int newSize){
@@ -64,7 +59,5 @@ public enum GameCharacters {
 
     public Bitmap getSpriteSheetNoScale() { return spriteSheetNoScale; }
     public Bitmap getSpriteSheet2xScale() { return spriteSheet2xScale; }
-    public Bitmap getSpriteSheet10xScale() { return spriteSheet10xScale; }
 
-    public Bitmap getCustomScale(int scale) { return getScaledBitmap(spriteSheetNoScale, scale); }
 }

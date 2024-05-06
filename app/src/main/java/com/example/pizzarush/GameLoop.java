@@ -4,8 +4,8 @@ import java.util.Random;
 
 public class GameLoop implements Runnable{
     Random random = new Random();
-    private Thread gameThread;
-    private GamePanel gamePanel;
+    private final Thread gameThread;
+    private final GamePanel gamePanel;
     public int patronSpawnRate = 5; // 1 min 50 max (50+ is the same rate as 50)
     private int increaseDifficulty = 0;
     private int failedSpawns = 0;
@@ -38,7 +38,7 @@ public class GameLoop implements Runnable{
 
             long now = System.currentTimeMillis();
             if(now - lastFPScheck >= 1000){
-                // System.out.println("FPS: "+fps);
+                System.out.println("FPS: "+fps);
                 fps = 0;
                 lastFPScheck+=1000;
             }
