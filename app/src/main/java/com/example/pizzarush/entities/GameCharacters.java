@@ -46,6 +46,7 @@ public enum GameCharacters {
         spriteSheet2xScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheet = getScaledBitmap(spriteSheet, 5);
         spriteSheet2xScale = getScaledBitmap(spriteSheet2xScale, 2);
+
     }
 
     private Bitmap getScaledBitmap(Bitmap bitmap, int newSize){
