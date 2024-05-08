@@ -6,7 +6,7 @@ public class GameLoop implements Runnable{
     Random random = new Random();
     private final Thread gameThread;
     private final GamePanel gamePanel;
-    public int patronSpawnRate = 5; // 1 min 50 max (50+ is the same rate as 50)
+    public int patronSpawnRate = 7; // 1 min 50 max (50+ is the same rate as 50)
     private int increaseDifficulty = 0;
     private int failedSpawns = 0;
 
