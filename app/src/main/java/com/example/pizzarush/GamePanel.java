@@ -23,6 +23,8 @@ import java.util.Random;
 
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     SharedPreferences save = getContext().getSharedPreferences("saveState",0);
+    MediaPlayer bgMusicMain = MediaPlayer.create(MainActivity.getGameContext(), R.raw.shopping_list);
+    MediaPlayer bgMusicGuess = MediaPlayer.create(MainActivity.getGameContext(), R.raw.quiet_saturday);
     final private Paint textPaint = new Paint();
     final private Paint textPaintBlack = new Paint();
     final private Paint textPaintHighscore = new Paint();
@@ -106,6 +108,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
     public GamePanel(Context context) {
         super(context);
+
+        bgMusicGuess.start();
+        bgMusicMain.start();
+        bgMusicGuess.setVolume(1f,1f);
+        bgMusicGuess.seekTo(18000);
 
         holder = getHolder();
         holder.addCallback(this);
@@ -547,6 +554,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     graceTimer = System.currentTimeMillis();
                     guessingIntroBlack = 0;
                     bezierCurve = -1;
+                    stopGameBGMusic();
                     currentGameState = gameState.GUESSING;
                 }
                 break;
@@ -586,6 +594,24 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
     public void update(double delta){
         long currentTime = SystemClock.elapsedRealtime();
+
+        // Music control
+        switch(currentGameState){
+            case MAIN_MENU:
+            case TUTORIAL:
+            case ACTIVE:
+            case GUESSING_INTO:
+            case GUESSING_OUT:
+                stopGuessBGMusic();
+                playGameBGMusic();
+                break;
+            case GUESSING:
+                playGuessBGMusic();
+            case GAME_OVER:
+                stopGameBGMusic();
+                break;
+        }
+
         switch(currentGameState){
             case TUTORIAL:
             case ACTIVE:
@@ -1226,6 +1252,39 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         plateCollect.start();
     }
 
+    public void playGuessBGMusic(){
+        if(!bgMusicGuess.isPlaying()){
+            bgMusicGuess.start();
+        }
+        if(!bgMusicGuess.isLooping()){
+            bgMusicGuess.setLooping(true);
+        }
+    }
+
+    public void stopGuessBGMusic(){
+        if(bgMusicGuess.isPlaying()) {
+            bgMusicGuess.pause();
+            bgMusicGuess.seekTo(18000);
+            bgMusicGuess.setLooping(false);
+        }
+    }
+    public void playGameBGMusic(){
+        if(!bgMusicMain.isPlaying()) {
+            bgMusicMain.start();
+        }
+
+        if(!bgMusicMain.isLooping()){
+            bgMusicMain.setLooping(true);
+        }
+    }
+
+    public void stopGameBGMusic(){
+        if(bgMusicMain.isPlaying()) {
+            bgMusicMain.pause();
+            bgMusicMain.seekTo(0);
+            bgMusicMain.setLooping(false);
+        }
+    }
     // Classes
     class guessBox{
         int id;
