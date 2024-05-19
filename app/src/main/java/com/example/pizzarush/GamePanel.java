@@ -26,6 +26,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     MediaPlayer bgMusicMain = MediaPlayer.create(MainActivity.getGameContext(), R.raw.shopping_list);
     MediaPlayer bgMusicGuess = MediaPlayer.create(MainActivity.getGameContext(), R.raw.quiet_saturday);
     final private Paint textPaint = new Paint();
+    final private Paint titlePaint1 = new Paint();
+    final private Paint titlePaint2 = new Paint();
+    final private Paint titlePaintBorder = new Paint();
     final private Paint textPaintBlack = new Paint();
     final private Paint textPaintHighscore = new Paint();
     final private Paint banner = new Paint();
@@ -33,16 +36,23 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     final private Paint textPaintBorder = new Paint();
     final private Paint textPaintTransition = new Paint();
     final private Paint textPaintTransitionBorder = new Paint();
+    final private Paint speechBubbleWhite = new Paint();
+    final private Paint speechBubbleBorder = new Paint();
     final private Paint textScorePaint = new Paint();
     final private Paint textScoreLevel = new Paint();
     final private Paint tutorialGrey = new Paint();
     final private Paint blackPaint = new Paint();
-    final private Paint menuBackgroundPaint = new Paint();
+    final private Paint menuBackgroundPaint1 = new Paint();
+    final private Paint menuBackgroundPaint2 = new Paint();
     final private Paint paintRed = new Paint();
+    final private Paint paintDarkerRed = new Paint();
     final private Paint paintBlue = new Paint();
+    final private Paint paintDarkerBlue = new Paint();
     final private Paint paintYellow = new Paint();
     final private Paint paintGreen = new Paint();
+    final private Paint paintDarkerGreen = new Paint();
     final private Paint paintDarkGrey = new Paint();
+    final private Paint paintButtonGrey = new Paint();
     final private Paint buttonText = new Paint();
     private final SurfaceHolder holder;
     private final Random random = new Random();
@@ -99,15 +109,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     boolean leftCheck = false;
     boolean rightCheck = false;
     int doubleCheck = 0;
-    boolean finishedTutorial = false;
+    // My devices screen dimensions 1080x2097 Length*Width
     int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
     int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 
+    float responsiveOffsetX = (float) screenWidth/1080;
+    float responsiveOffsetY = (float) screenHeight/2097;
+    // smaller screen <1 | bigger screen >1
 
-
+    private int tutorialIn = -screenWidth/2;
 
     public GamePanel(Context context) {
         super(context);
+
+
 
         bgMusicGuess.start();
         bgMusicMain.start();
@@ -116,8 +131,34 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
         holder = getHolder();
         holder.addCallback(this);
+
+        titlePaint1.setColor(Color.RED);
+        titlePaint1.setTextSize(250*responsiveOffsetX);
+        titlePaint1.setTextAlign(Paint.Align.CENTER);
+        titlePaint1.setStyle(Paint.Style.FILL_AND_STROKE);
+        titlePaint1.setStrokeWidth(5);
+        titlePaint1.setLetterSpacing(0.1f);
+
+        titlePaint2.setColor(Color.rgb(255,149,56));
+        titlePaint2.setTextSize(250*responsiveOffsetX);
+        titlePaint2.setTextAlign(Paint.Align.CENTER);
+        titlePaint2.setStyle(Paint.Style.FILL_AND_STROKE);
+        titlePaint2.setStrokeWidth(5);
+        titlePaint2.setLetterSpacing(0.1f);
+
+        titlePaintBorder.setColor(Color.BLACK);
+        titlePaintBorder.setTextSize(250*responsiveOffsetX);
+        titlePaintBorder.setTextAlign(Paint.Align.CENTER);
+        titlePaintBorder.setStyle(Paint.Style.STROKE);
+        titlePaintBorder.setStrokeWidth(25);
+        titlePaintBorder.setLetterSpacing(0.1f);
+
+        speechBubbleWhite.setColor(Color.WHITE);
+
+        speechBubbleBorder.setColor(Color.rgb(238, 237, 237));
+
         textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(75);
+        textPaint.setTextSize(75*responsiveOffsetX);
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setStyle(Paint.Style.FILL);
 
@@ -145,20 +186,24 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         banner.setColor(Color.argb(110,210,145,58));
 
         paintRed.setColor(Color.rgb(233,61,52));
+        paintDarkerRed.setColor(Color.rgb(205,50,42));
         paintBlue.setColor(Color.rgb(65,131,255));
+        paintDarkerBlue.setColor(Color.rgb(55,110,211));
         paintYellow.setColor(Color.rgb(247,153,38));
         paintGreen.setColor((Color.rgb(134, 244, 87)));
+        paintDarkerGreen.setColor(Color.rgb(109,199,71));
 
         paintGrey.setColor(Color.LTGRAY);
         paintDarkGrey.setColor(Color.rgb(55,55,55));
+        paintButtonGrey.setColor(Color.parseColor("#808080"));
 
         buttonText.setColor(Color.BLACK);
         buttonText.setTextAlign(Paint.Align.CENTER);
-        buttonText.setTextSize(90);
+        buttonText.setTextSize(90*responsiveOffsetX);
         buttonText.setStyle(Paint.Style.FILL);
 
         textPaintHighscore.setColor(Color.BLACK);
-        textPaintHighscore.setTextSize(75);
+        textPaintHighscore.setTextSize(75*responsiveOffsetY);
         textPaintHighscore.setTextAlign(Paint.Align.CENTER);
         textPaintHighscore.setStyle(Paint.Style.FILL);
 
@@ -180,10 +225,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
         tutorialGrey.setColor(Color.BLACK);
         tutorialGrey.setAlpha(125);
-        System.out.println("ScreenHeight: "+screenHeight);
-        System.out.println("ScreenWidth: "+screenWidth);
+        System.out.println("ScreenHeight: "+responsiveOffsetY);
+        System.out.println("ScreenWidth: "+responsiveOffsetX);
 
-        menuBackgroundPaint.setColor(Color.parseColor("#FFCF87"));
+        menuBackgroundPaint1.setColor(Color.parseColor("#FFCF87"));
+        menuBackgroundPaint2.setColor(Color.parseColor("#e8af5a"));
+        menuBackgroundPaint2.setAlpha(75);
 
         blackPaint.setColor(Color.BLACK);
 
@@ -200,6 +247,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         menuPar.add(new menuBG(menuBGHeight*2));
         menuPar.add(new menuBG(menuBGHeight*3));
         menuPar.add(new menuBG(menuBGHeight*4));
+        // Extra in case of a large phone
+        menuPar.add(new menuBG(menuBGHeight*5));
 
     }
 
@@ -208,92 +257,210 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
         switch(currentGameState) {
             case TUTORIAL:
-                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+                drawFloor(canvas);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790*responsiveOffsetX, 0, null);
                 switch(tutorialState){
                     case 0:
+                        int chefPosX = tutorialIn-screenWidth/15;
+                        if(chefPosX>0)
+                            chefPosX=0;
+                        tutorialIn+=8;
+                        if(tutorialIn>=screenWidth/15)
+                            tutorialState++;
+
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+ (float) patron.patronSize /2, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
-                        canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
-                        canvas.drawText("Tap to throw pizza", 520, 1950, textPaint);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+
+
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) chefPosX, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) chefPosX, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("", screenHeight/2-(int) (270*responsiveOffsetY), tutorialIn,canvas);
                         break;
-                    case 1: // Throwing pizza
+                    case 1:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("Oh, YOU'RE the new chef??", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+                        break;
+
+                    case 2:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("If I had to look down any lower my hat", "would fall off! I guess that doesn't matter", "if you can do the job.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
+                        break;
+                    case 3:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("First things first, lets see how well", "you can throw a pizza.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
+                        break;
+                    case 4:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        drawSpeechBubble("That patron over there looks quite hungry.", "We NEVER let our patrons be hungry.", screenHeight/15,canvas);
+                    break;
+                    case 5:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        drawSpeechBubble("Your job is simple.Just tap the screen", "anywhere to throw a pizza.", screenHeight/15,canvas);
+
+                        break;
+                    case 6:
+                        // Throwing pizza
                         synchronized (pizzas) {
                             for(patron patron : patrons){
-                                canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+ (float) patron.patronSize /2, patron.patronPosition, null);
+                                canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
                             }
                             for(pizza pizza : pizzas){
-                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2, pizza.pizzaPosition, null);
-                                // canvas.drawRect(pizza.pizzaAislePosition*360-180+pizza.pizzaSize/2, pizza.pizzaPosition, pizza.pizzaAislePosition*360 - 180-pizza.pizzaSize/2, pizza.pizzaPosition+pizza.pizzaSize, bluePaint);
+                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
                                 pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
                                 if(pizza.pizzaPosition<=0)
                                     gameOver(0);
                             }
                         }
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
                         break;
-
-                    case 2: // Eating
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
-                        break;
-                    case 3: // Telling how to catch plates
-                        for(emptyPlate plate : plates){
-                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
+                    case 7:
+                        // Eating
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
-
-                        canvas.drawRect(0, 0, 1080, 370, tutorialGrey);
-                        canvas.drawRect(0, 370, 300, 670, tutorialGrey);
-                        canvas.drawRect(780, 370, 1080, 670, tutorialGrey);
-                        canvas.drawRect(0, 670, 1080, 2300, tutorialGrey);
-
-                        canvas.drawText("Be in the right aisle", 520, 750, textPaint);
-                        canvas.drawText("to catch the plates", 520, 850, textPaint);
-                        canvas.drawText("(Tap to continue)", 520, 950, textPaint);
+                        synchronized (pizzas){
+                            for(pizza pizza : pizzas){
+                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
+                                pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
+                                if(pizza.pizzaPosition<=0)
+                                    gameOver(0);
+                            }
+                        }
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
                         break;
-                    case 4: // Catching the plate
+                    case 8:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        drawSpeechBubble("Good, but the work is not over yet", screenHeight/15,canvas);
+
+                        break;
+                    case 9:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        drawSpeechBubble("The plates we use are of the finest quality,", "and we can't have you breaking them.", screenHeight/15,canvas);
+
+                        break;
+                    case 10:
+                        for(patron patron : patrons){
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                        }
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        drawSpeechBubble("Simply stand where the plate is going to be", "to catch it", screenHeight/15,canvas);
+
+                        break;
+                    case 11:
+                        // Catch the plate
                         for(emptyPlate plate : plates){
-                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
+                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2)*responsiveOffsetX, plate.emptyPlatePos, null);
                             plate.emptyPlatePos += (int) (delta * plate.emptyPlateSpeed * 60);
                             if(plate.emptyPlatePos>=1900)
                                 gameOver(2);
-                            canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                            canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
                         }
                         break;
-                    case 5: // Telling them to move left and right
-                        canvas.drawRect(0, 0, 1080, 1500, tutorialGrey);
-                        canvas.drawText("Tap and hold to move aisles", 520, 1950, textPaint);
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                    case 12:
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("Not bad. Maybe you are cut out for this job.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
+                        break;
+                    case 13:
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("I won't mince words, we are severely", "understaffed. You're going to have to manage"," three aisles on your own.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+                        break;
+                    case 14:
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("You can move between aisles by tap and","holding the screen. Now lets see you do it.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
+                        break;
+                    case 15:
+                        // Moving aisles
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
                         if(playerPosition == 1)
                             leftCheck = true;
                         if(playerPosition == 3)
                             rightCheck = true;
                         if(leftCheck && rightCheck){
-                            if(doubleCheck >= 2)
-                                tutorialState = 6;
                             doubleCheck++;
                             leftCheck = false;
                             rightCheck = false;
                         }
                         break;
-                    case 6: // Final notes & start the game
-                        canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
-                        canvas.drawRect(0, 0, 1080, 2200, tutorialGrey);
-                        canvas.drawText("Feed the patrons", 520, 700, textPaint);
-                        canvas.drawText("and catch the plates :)", 520, 800, textPaint);
-                        canvas.drawText("HIGHSCORE HOLDER", 520, 1100, textPaint);
-                        canvas.drawText("Alyssa: 6900", 530, 1200, textPaint);
-                        canvas.drawText("Thank you for play testing <3", 530, 1400, textPaint);
+                    case 16:
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("This concludes your unpaid training,","good work employee.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
+                        break;
+                    case 17:
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        drawSpeechBubble("Your real shift starts right about now.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
+
                         break;
                 }
                 break;
 
             case MAIN_MENU:
-                canvas.drawRect(0,0,screenWidth,screenHeight, menuBackgroundPaint);
+                canvas.drawRect(0,0,screenWidth,screenHeight, menuBackgroundPaint1);
+
+                canvas.drawRoundRect(0,500*responsiveOffsetY ,screenWidth,screenHeight+400, 400,400, menuBackgroundPaint2);
+                canvas.drawRoundRect(0,1000*responsiveOffsetY,screenWidth,screenHeight+400, 400,400, menuBackgroundPaint2);
+                canvas.drawRoundRect(0,1500*responsiveOffsetY,screenWidth,screenHeight+400, 400,400, menuBackgroundPaint2);
+
                 // Pizzas
                 ArrayList<menuBG> toRemoveSlides = new ArrayList<>();
                 int minSlides = 0;
@@ -313,24 +480,32 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     menuPar.removeAll(toRemoveSlides);
                 }
                 // HighScore
-                canvas.drawRect(0, (float) screenHeight /3,screenWidth, (float) screenHeight /3+100, banner);
-                canvas.drawText("HighScore: "+highScore, (float) screenWidth /2, (float) screenHeight /3+75, textPaintHighscore);
+                canvas.drawRect(0, (float) screenHeight /3,screenWidth, (float) screenHeight /3+100*responsiveOffsetY, banner);
+                canvas.drawText("HighScore: "+highScore, (float) screenWidth/2, (float) screenHeight /3+75*responsiveOffsetY, textPaintHighscore);
 
                 // Buttons
                 if (score!=0){
-                    drawButton("CONTINUE", 1000, paintGreen, buttonText, canvas);
-                    canvas.drawText("("+score+")", (float) screenWidth /2, 1175, textPaintBlack);
+                    drawButton("CONTINUE", (int) (1000*responsiveOffsetY), paintGreen, buttonText, paintDarkerGreen, canvas);
+                    canvas.drawText("("+score+")", (float) screenWidth /2*responsiveOffsetX, 1175*responsiveOffsetY, textPaintBlack);
                 }
                 else
-                    drawButton("CONTINUE", 1000, paintGrey, buttonText, canvas);
+                    drawButton("CONTINUE", (int) (1000*responsiveOffsetY), paintGrey, buttonText, paintButtonGrey, canvas);
 
-                drawButton("NEW GAME", 1300, paintRed, buttonText, canvas);
-                drawButton("TUTORIAL", 1600, paintBlue, buttonText, canvas);
+                drawButton("NEW GAME", (int) (1300*responsiveOffsetY), paintRed, buttonText, paintDarkerRed, canvas);
+                drawButton("TUTORIAL", (int) (1600*responsiveOffsetY), paintBlue, buttonText, paintDarkerBlue, canvas);
 
-                canvas.drawBitmap(GameCharacters.TITLE.getSpriteSheet(), (float) screenWidth /2 - (float) GameCharacters.TITLE.getSpriteSheet().getWidth() /2, 50, null);
+                canvas.drawText("PIZZA", (float) screenWidth/2, 320*responsiveOffsetY, titlePaintBorder);
+                canvas.drawText("PIZZA", (float) screenWidth/2, 320*responsiveOffsetY, titlePaint1);
+                canvas.drawText("RUSH", (float) screenWidth/2, 550*responsiveOffsetY, titlePaintBorder);
+                canvas.drawText("RUSH", (float) screenWidth/2, 550*responsiveOffsetY, titlePaint2);
+
+
+
+
                 break;
             case ACTIVE:
-                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                drawFloor(canvas);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
@@ -361,7 +536,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 synchronized (pizzas) {
                     for(pizza pizza : pizzas){
                         canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2, pizza.pizzaPosition, null);
-                        // canvas.drawRect(pizza.pizzaAislePosition*360-180+pizza.pizzaSize/2, pizza.pizzaPosition, pizza.pizzaAislePosition*360 - 180-pizza.pizzaSize/2, pizza.pizzaPosition+pizza.pizzaSize, bluePaint);
                         pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
                         if(pizza.pizzaPosition<=0)
                             gameOver(0);
@@ -384,7 +558,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawText("Level "+level, (float) screenWidth /2, 100, textScoreLevel);
                 break;
             case GAME_OVER:
-                canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                // canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                drawFloorGameOver(canvas);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
@@ -413,7 +588,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawBitmap((GameCharacters.GAMEOVER_TEXT.getSpriteSheetNoScale()),0,800, null);
                 canvas.drawText(gameOverReason,540, 1100, textPaintBorder);
                 canvas.drawText(gameOverReason,540, 1100, textPaint);
-                drawButton("MENU", 1700, paintRed, buttonText, canvas);
+                drawButton("MENU", 1700, paintRed, buttonText, paintDarkerRed, canvas);
                 if(score>highScore){
 
 
@@ -481,7 +656,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 }
                 break;
             case GUESSING_INTO:
-                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                drawFloor(canvas);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
@@ -559,7 +735,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 }
                 break;
             case GUESSING_OUT:
-                canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
+                drawFloor(canvas);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
@@ -625,7 +802,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             if(plate.emptyPlateAisle == playerPosition){
                                 toRemovePlate.add(plate);
                                 playAudioPlateCollect();
-                                tutorialState = 5;
+                                tutorialState = 12; // Wait for player to catch plate
                             }
                         }
                     }
@@ -663,7 +840,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             if (patron.satisfiedTimer <= 0) {
                                 toRemovePatron.add(patron);
                                 plates.add(new emptyPlate(patron.patronPosition, patron.patronAisle));
-                                tutorialState = 3;
+                                tutorialState = 8; // Waiting for patron to finish eating
                             } else
                                 patron.satisfiedTimer--;
                         }
@@ -904,25 +1081,35 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         switch(currentGameState){
             case TUTORIAL:
                 switch(tutorialState){
-                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 16:
+                        // case 7: found around line 760
+                    case 8:
+                    case 9:
+                    case 10:
+                        // case 11 around line 840
+                    case 12:
+                    case 13:
+                    case 14:
+                        if(event.getAction() == MotionEvent.ACTION_UP)
+                            tutorialState++;
+                        break;
+                    case 6:
+                        // Throw the pizza
                         if(event.getAction() == MotionEvent.ACTION_UP){
                             synchronized (pizzas) {
-                                pizzas.add(new pizza());
+                                        pizzas.add(new pizza());
                             }
                             playAudioThrowPizza();
                             playerAnimationState = 3.0;
-                            tutorialState = 1;
+                            tutorialState = 7;
                         }
                         break;
-                    case 1:
-                    case 2:
-                    case 4:
-                        break;
-                    case 3:
-                        if(event.getAction() == MotionEvent.ACTION_UP)
-                            tutorialState = 4;
-                        break;
-                    case 5:
+                    case 15:
                         if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
                             if(event.getX()<=360)
                                 playerPosition=1;
@@ -931,12 +1118,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             else
                                 playerPosition=3;
                         }
+                        if(event.getAction() == MotionEvent.ACTION_UP && doubleCheck>=1){
+                            doubleCheck=0;
+                            tutorialState++;
+                        }
                         break;
-                    case 6:
+                    case 17:
                         if(event.getAction() == MotionEvent.ACTION_UP) {
-                            if (finishedTutorial)
-                                currentGameState = gameState.ACTIVE;
-                            else finishedTutorial = true;
+                            currentGameState = gameState.ACTIVE;
                         }
                         break;
                 }
@@ -945,7 +1134,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 if(event.getAction() == MotionEvent.ACTION_UP){
                     if(event.getX()>= (float) screenWidth /5 && event.getX()<screenWidth- (float) screenWidth /5){
                         // CONTINUE
-                        if(event.getY()>1000 && event.getY()<1200 && score!=0) {
+                        if(event.getY()>1000*responsiveOffsetY && event.getY()<1200*responsiveOffsetY && score!=0) {
                             level = save.getInt("level", 1);
                             score = save.getInt("score", 0);
                             gameLoop.patronSpawnRate = level*7;
@@ -953,7 +1142,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         }
 
                         // NEW GAME
-                        if(event.getY()>1400 && event.getY()<1600){
+                        if(event.getY()>1400*responsiveOffsetY && event.getY()<1600*responsiveOffsetY){
                             gameOver(-1); // Wipes cache
                             level = 1;
                             score = 0;
@@ -962,10 +1151,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         }
 
                         // TUTORIAL
-                        else if(event.getY()>1600 && event.getY()<1800) {
+                        else if(event.getY()>1600*responsiveOffsetY && event.getY()<1800*responsiveOffsetY) {
                             tutorialState = 0;
                             spawnPatron(-1);
                             playerPosition = 2;
+                            tutorialIn = -screenWidth/2;
                             currentGameState = gameState.TUTORIAL;
                         }
                     }
@@ -1073,12 +1263,58 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     }
 
 
-    public void drawButton(String text, int posY, Paint colour, Paint textColour, Canvas canvas){
+    public void drawButton(String text, int posY, Paint colour, Paint textColour, Paint borderColour, Canvas canvas){
         int widthLeft = screenWidth/5;
         int widthRight = screenWidth - screenWidth/5;
-        int height = 200;
-        canvas.drawRect(widthLeft, posY, widthRight, posY+height, colour);
-        canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+125, textColour);
+        int height = (int) (200*responsiveOffsetY);
+        int borderSize = (int) (15*responsiveOffsetX);
+
+        canvas.drawRoundRect(widthLeft-borderSize, posY-borderSize, widthRight+borderSize, posY+height+borderSize, 50, 50, borderColour);
+        canvas.drawRoundRect(widthLeft, posY, widthRight, posY+height, 50, 50, colour);
+        canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+125*responsiveOffsetY, textColour);
+    }
+
+    public void drawSpeechBubble(String text, int posY, Canvas canvas){
+        int widthLeft = screenWidth/15;
+        int widthRight = screenWidth - screenWidth/15;
+        int height = (int) (300*responsiveOffsetY);
+        int borderSize = (int) (15*responsiveOffsetX);
+
+        canvas.drawRoundRect(widthLeft-borderSize, posY-borderSize, widthRight+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
+        canvas.drawRoundRect(widthLeft, posY, widthRight, posY+height, 50, 50, speechBubbleWhite);
+        canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+125*responsiveOffsetY, textPaintBlack);
+    }
+    public void drawSpeechBubble(String text, int posY, int posX, Canvas canvas){
+        int totalWidth = screenWidth - screenWidth*2/15;
+        int height = (int) (300*responsiveOffsetY);
+        int borderSize = (int) (15*responsiveOffsetX);
+
+        canvas.drawRoundRect(posX-borderSize, posY-borderSize, totalWidth+posX+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
+        canvas.drawRoundRect(posX, posY, totalWidth+posX, posY+height, 50, 50, speechBubbleWhite);
+        canvas.drawText(text, posX, posY+125*responsiveOffsetY, textPaintBlack);
+    }
+    public void drawSpeechBubble(String text, String text2, int posY, Canvas canvas){
+        int widthLeft = screenWidth/15;
+        int widthRight = screenWidth - screenWidth/15;
+        int height = (int) (300*responsiveOffsetY);
+        int borderSize = (int) (15*responsiveOffsetX);
+
+        canvas.drawRoundRect(widthLeft-borderSize, posY-borderSize, widthRight+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
+        canvas.drawRoundRect(widthLeft, posY, widthRight, posY+height, 50, 50, speechBubbleWhite);
+        canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+125*responsiveOffsetY, textPaintBlack);
+        canvas.drawText(text2, widthLeft+ (float) (widthRight - widthLeft) /2, posY+175*responsiveOffsetY, textPaintBlack);
+    }
+    public void drawSpeechBubble(String text, String text2, String text3, int posY, Canvas canvas){
+        int widthLeft = screenWidth/15;
+        int widthRight = screenWidth - screenWidth/15;
+        int height = (int) (300*responsiveOffsetY);
+        int borderSize = (int) (15*responsiveOffsetX);
+
+        canvas.drawRoundRect(widthLeft-borderSize, posY-borderSize, widthRight+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
+        canvas.drawRoundRect(widthLeft, posY, widthRight, posY+height, 50, 50, speechBubbleWhite);
+        canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+100*responsiveOffsetY, textPaintBlack);
+        canvas.drawText(text2, widthLeft+ (float) (widthRight - widthLeft) /2, posY+175*responsiveOffsetY, textPaintBlack);
+        canvas.drawText(text3, widthLeft+ (float) (widthRight - widthLeft) /2, posY+250*responsiveOffsetY, textPaintBlack);
     }
     public void spawnPatron(int pattern){
         if(currentGameState == gameState.ACTIVE) {
@@ -1116,7 +1352,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             }
         }
         if(pattern == -1){
-            patrons.add(new patron(400, 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
+            patrons.add(new patron((int) (700*responsiveOffsetY), 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
         }
     }
     public void clearEntities(){
@@ -1214,6 +1450,46 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     }
                 }
                 break;
+        }
+    }
+
+    public void drawFloor(Canvas canvas){
+        int amount = 9; // Must be odd
+        int side = screenWidth/amount;
+        int counter=0;
+        Paint paint1 = new Paint();
+        Paint paint2 = new Paint();
+        paint1.setColor(Color.rgb(206, 201, 198));
+        paint2.setColor(Color.rgb(124, 122, 118));
+
+        for(int i=0; side*i<screenHeight; i++){
+
+            for(int j=0; j<amount; j++, counter++){
+                if(counter%2==0)
+                    canvas.drawRect(j*side,i*side,(j+1)*side,(i+1)*side, paint1);
+                else
+                    canvas.drawRect(j*side,i*side,(j+1)*side,(i+1)*side, paint2);
+            }
+        }
+    }
+
+    public void drawFloorGameOver(Canvas canvas){
+        int amount = 9; // Must be odd
+        int side = screenWidth/amount;
+        int counter=0;
+        Paint paint1 = new Paint();
+        Paint paint2 = new Paint();
+        paint1.setColor(Color.rgb(218, 103, 103));
+        paint2.setColor(Color.rgb(179, 22, 22));
+
+        for(int i=0; side*i<screenHeight; i++){
+
+            for(int j=0; j<amount; j++, counter++){
+                if(counter%2==0)
+                    canvas.drawRect(j*side,i*side,(j+1)*side,(i+1)*side, paint1);
+                else
+                    canvas.drawRect(j*side,i*side,(j+1)*side,(i+1)*side, paint2);
+            }
         }
     }
     public void boxAnimation(){

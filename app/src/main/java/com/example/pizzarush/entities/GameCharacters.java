@@ -31,12 +31,11 @@ public enum GameCharacters {
     PATRON_EAT2(R.drawable.patron_eat_2),
     CHEF_BODY(R.drawable.chef_body),
     CHEF_HEAD(R.drawable.chef_head),
-    FLOOR(R.drawable.floor),
-    GAMEOVER_FLOOR(R.drawable.floor_gameover),
+    // FLOOR(R.drawable.floor),
+    // GAMEOVER_FLOOR(R.drawable.floor_gameover),
     GAMEOVER_TEXT(R.drawable.gameover_text),
     COUNTER(R.drawable.counter),
     SPEECH(R.drawable.speech_bubble),
-    TITLE(R.drawable.title_pr),
     TITLE_BG(R.drawable.title_bg);
 
     private Bitmap spriteSheet;
