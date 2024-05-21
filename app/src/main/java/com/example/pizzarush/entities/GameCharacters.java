@@ -1,5 +1,6 @@
 package com.example.pizzarush.entities;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
@@ -41,6 +42,11 @@ public enum GameCharacters {
     private Bitmap spriteSheet;
     private final Bitmap spriteSheetNoScale;
     private Bitmap spriteSheet2xScale;
+    int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+    int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+
+    float responsiveOffsetX = (float) screenWidth/1080;
+    float responsiveOffsetY = (float) screenHeight/2097;
 
     GameCharacters(int resID) {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -48,8 +54,8 @@ public enum GameCharacters {
         spriteSheet = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheetNoScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
         spriteSheet2xScale = BitmapFactory.decodeResource(MainActivity.getGameContext().getResources(), resID, options);
-        spriteSheet = getScaledBitmap(spriteSheet, 5);
-        spriteSheet2xScale = getScaledBitmap(spriteSheet2xScale, 2);
+        spriteSheet = getScaledBitmap(spriteSheet, (int) (5*responsiveOffsetX));
+        spriteSheet2xScale = getScaledBitmap(spriteSheet2xScale, (int) (2*responsiveOffsetX));
 
     }
 

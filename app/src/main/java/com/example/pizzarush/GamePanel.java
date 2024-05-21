@@ -31,6 +31,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     final private Paint titlePaintBorder = new Paint();
     final private Paint textPaintBlack = new Paint();
     final private Paint textPaintHighscore = new Paint();
+    final private Paint gameOver = new Paint();
+    final private Paint gameOverBackground = new Paint();
     final private Paint banner = new Paint();
     final private Paint paintGrey = new Paint();
     final private Paint textPaintBorder = new Paint();
@@ -73,10 +75,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     private int prevScore = (int) Math.pow(level-1, 2)*1500+timesCorrectGuess*2000;
     private int highScore = save.getInt("highscore",0);
     private boolean hasMoved = false;
-    final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
-    final private int pizzaWidth = GameCharacters.PIZZA.getSpriteSheet().getWidth();
-    final private int emptyPlateWidth = GameCharacters.PLATE.getSpriteSheet().getWidth();
-    final private int guessBoxWidth = GameCharacters.PIZZABOX.getSpriteSheet().getWidth();
     private int danceTimer=0, danceIndex=0;
     final Object patronSleep = new Object();
     private final GameLoop gameLoop;
@@ -116,7 +114,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     float responsiveOffsetX = (float) screenWidth/1080;
     float responsiveOffsetY = (float) screenHeight/2097;
     // smaller screen <1 | bigger screen >1
-
+    final private int playerWidth = (int) (GameCharacters.PLAYER.getSpriteSheet().getWidth()*responsiveOffsetX);
+    final private int pizzaWidth = (int)(GameCharacters.PIZZA.getSpriteSheet().getWidth()*responsiveOffsetX);
+    final private int emptyPlateWidth = (int) (GameCharacters.PLATE.getSpriteSheet().getWidth()*responsiveOffsetX);
+    final private int guessBoxWidth = (int) (GameCharacters.PIZZABOX.getSpriteSheet().getWidth()*responsiveOffsetX);
     private int tutorialIn = -screenWidth/2;
 
     public GamePanel(Context context) {
@@ -136,22 +137,34 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         titlePaint1.setTextSize(250*responsiveOffsetX);
         titlePaint1.setTextAlign(Paint.Align.CENTER);
         titlePaint1.setStyle(Paint.Style.FILL_AND_STROKE);
-        titlePaint1.setStrokeWidth(5);
+        titlePaint1.setStrokeWidth(5*responsiveOffsetX);
         titlePaint1.setLetterSpacing(0.1f);
 
         titlePaint2.setColor(Color.rgb(255,149,56));
         titlePaint2.setTextSize(250*responsiveOffsetX);
         titlePaint2.setTextAlign(Paint.Align.CENTER);
         titlePaint2.setStyle(Paint.Style.FILL_AND_STROKE);
-        titlePaint2.setStrokeWidth(5);
+        titlePaint2.setStrokeWidth(5*responsiveOffsetX);
         titlePaint2.setLetterSpacing(0.1f);
 
         titlePaintBorder.setColor(Color.BLACK);
         titlePaintBorder.setTextSize(250*responsiveOffsetX);
         titlePaintBorder.setTextAlign(Paint.Align.CENTER);
         titlePaintBorder.setStyle(Paint.Style.STROKE);
-        titlePaintBorder.setStrokeWidth(25);
+        titlePaintBorder.setStrokeWidth(25*responsiveOffsetX);
         titlePaintBorder.setLetterSpacing(0.1f);
+
+        gameOver.setColor(Color.WHITE);
+        gameOver.setTextSize(180*responsiveOffsetX);
+        gameOver.setTextAlign(Paint.Align.CENTER);
+        gameOver.setStyle(Paint.Style.FILL_AND_STROKE);
+        gameOver.setStrokeWidth(5*responsiveOffsetX);
+
+        gameOverBackground.setColor(Color.BLACK);
+        gameOverBackground.setTextSize(180*responsiveOffsetX);
+        gameOverBackground.setTextAlign(Paint.Align.CENTER);
+        gameOverBackground.setStyle(Paint.Style.STROKE);
+        gameOverBackground.setStrokeWidth(25*responsiveOffsetX);
 
         speechBubbleWhite.setColor(Color.WHITE);
 
@@ -163,25 +176,25 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         textPaint.setStyle(Paint.Style.FILL);
 
         textPaintTransition.setTextAlign(Paint.Align.CENTER);
-        textPaintTransition.setTextSize(100);
+        textPaintTransition.setTextSize(100*responsiveOffsetX);
         textPaintTransition.setStyle(Paint.Style.FILL);
         textPaintTransition.setColor(Color.rgb(255,110,84));
 
         textPaintTransitionBorder.setTextAlign(Paint.Align.CENTER);
-        textPaintTransitionBorder.setTextSize(100);
+        textPaintTransitionBorder.setTextSize(100*responsiveOffsetX);
         textPaintTransitionBorder.setStyle(Paint.Style.STROKE);
-        textPaintTransitionBorder.setStrokeWidth(10);
+        textPaintTransitionBorder.setStrokeWidth(10*responsiveOffsetX);
         textPaintTransitionBorder.setColor(Color.rgb(252,198, 30));
 
         textPaintBlack.setColor(Color.BLACK);
         textPaintBlack.setTextAlign(Paint.Align.CENTER);
         textPaintBlack.setStyle(Paint.Style.FILL);
-        textPaintBlack.setTextSize(45);
+        textPaintBlack.setTextSize(48*responsiveOffsetX);
 
         Paint textToMenu = new Paint();
         textToMenu.setColor(Color.WHITE);
         textToMenu.setTextAlign(Paint.Align.CENTER);
-        textToMenu.setTextSize(100);
+        textToMenu.setTextSize(100*responsiveOffsetX);
 
         banner.setColor(Color.argb(110,210,145,58));
 
@@ -208,18 +221,18 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         textPaintHighscore.setStyle(Paint.Style.FILL);
 
         textPaintBorder.setStyle(Paint.Style.STROKE);
-        textPaintBorder.setTextSize(75);
+        textPaintBorder.setTextSize(75*responsiveOffsetX);
         textPaintBorder.setTextAlign(Paint.Align.CENTER);
-        textPaintBorder.setStrokeWidth(12);
+        textPaintBorder.setStrokeWidth(12*responsiveOffsetX);
         textPaintBorder.setColor(Color.BLACK);
 
         textScorePaint.setColor(Color.WHITE);
-        textScorePaint.setTextSize(75);
+        textScorePaint.setTextSize(75*responsiveOffsetX);
         textScorePaint.setTextAlign(Paint.Align.CENTER);
         textScorePaint.setStyle(Paint.Style.FILL);
 
         textScoreLevel.setColor(Color.WHITE);
-        textScoreLevel.setTextSize(60);
+        textScoreLevel.setTextSize(60*responsiveOffsetX);
         textScoreLevel.setTextAlign(Paint.Align.CENTER);
         textScoreLevel.setStyle(Paint.Style.FILL);
 
@@ -271,61 +284,61 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             tutorialState++;
 
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
 
 
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) chefPosX, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) chefPosX, 100*responsiveOffsetY, null);
-                        drawSpeechBubble("", screenHeight/2-(int) (270*responsiveOffsetY), tutorialIn,canvas);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) chefPosX, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) chefPosX, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        drawSpeechBubble("", screenHeight/2-(int) (270*responsiveOffsetY), tutorialIn, tutorialIn+screenWidth - screenWidth*2/15,canvas);
                         break;
                     case 1:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("Oh, YOU'RE the new chef??", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
                         break;
 
                     case 2:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("If I had to look down any lower my hat", "would fall off! I guess that doesn't matter", "if you can do the job.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
                     case 3:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("First things first, lets see how well", "you can throw a pizza.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
                     case 4:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         drawSpeechBubble("That patron over there looks quite hungry.", "We NEVER let our patrons be hungry.", screenHeight/15,canvas);
                     break;
                     case 5:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         drawSpeechBubble("Your job is simple.Just tap the screen", "anywhere to throw a pizza.", screenHeight/15,canvas);
 
                         break;
@@ -333,98 +346,98 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         // Throwing pizza
                         synchronized (pizzas) {
                             for(patron patron : patrons){
-                                canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                                canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                             }
                             for(pizza pizza : pizzas){
-                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
+                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),((pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
                                 pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
                                 if(pizza.pizzaPosition<=0)
                                     gameOver(0);
                             }
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         break;
                     case 7:
                         // Eating
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
                         synchronized (pizzas){
                             for(pizza pizza : pizzas){
-                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
+                                canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),((pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2)*responsiveOffsetX, pizza.pizzaPosition, null);
                                 pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
                                 if(pizza.pizzaPosition<=0)
                                     gameOver(0);
                             }
                         }
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         break;
                     case 8:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), (2*360-360+50)*responsiveOffsetX, (int) (700*responsiveOffsetY), null);
 
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         drawSpeechBubble("Good, but the work is not over yet", screenHeight/15,canvas);
 
                         break;
                     case 9:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), (2*360-360+50)*responsiveOffsetX, (int) (700*responsiveOffsetY), null);
 
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         drawSpeechBubble("The plates we use are of the finest quality,", "and we can't have you breaking them.", screenHeight/15,canvas);
 
                         break;
                     case 10:
                         for(patron patron : patrons){
-                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360+ (float) patron.patronSize /2)*responsiveOffsetX, patron.patronPosition, null);
+                            canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         }
-                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), 2*360-360+50, (int) (700*responsiveOffsetY), null);
+                        canvas.drawBitmap(GameCharacters.PATRON.getSpriteSheet(), (2*360-360+50)*responsiveOffsetX, (int) (700*responsiveOffsetY), null);
 
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         drawSpeechBubble("Simply stand where the plate is going to be", "to catch it", screenHeight/15,canvas);
 
                         break;
                     case 11:
                         // Catch the plate
                         for(emptyPlate plate : plates){
-                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2)*responsiveOffsetX, plate.emptyPlatePos, null);
+                            canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),((plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth /2)*responsiveOffsetX, plate.emptyPlatePos, null);
                             plate.emptyPlatePos += (int) (delta * plate.emptyPlateSpeed * 60);
                             if(plate.emptyPlatePos>=1900)
                                 gameOver(2);
-                            canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                            canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         }
                         break;
                     case 12:
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("Not bad. Maybe you are cut out for this job.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
                     case 13:
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("I won't mince words, we are severely", "understaffed. You're going to have to manage"," three aisles on your own.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
                         break;
                     case 14:
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("You can move between aisles by tap and","holding the screen. Now lets see you do it.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
                     case 15:
                         // Moving aisles
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         if(playerPosition == 1)
                             leftCheck = true;
                         if(playerPosition == 3)
@@ -436,18 +449,18 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         }
                         break;
                     case 16:
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("This concludes your unpaid training,","good work employee.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
                     case 17:
-                        canvas.drawBitmap(playerSprite, (playerPosition*360-180- (float) playerWidth /2)*responsiveOffsetX, 1640, null);
+                        canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         canvas.drawRect(0, 0, screenWidth, screenHeight, tutorialGrey);
-                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
-                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, 100*responsiveOffsetY, null);
+                        canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                        canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) 0, (screenHeight/2-(int) (270*responsiveOffsetY))-GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
                         drawSpeechBubble("Your real shift starts right about now.", screenHeight/2-(int) (270*responsiveOffsetY),canvas);
 
                         break;
@@ -486,7 +499,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 // Buttons
                 if (score!=0){
                     drawButton("CONTINUE", (int) (1000*responsiveOffsetY), paintGreen, buttonText, paintDarkerGreen, canvas);
-                    canvas.drawText("("+score+")", (float) screenWidth /2*responsiveOffsetX, 1175*responsiveOffsetY, textPaintBlack);
+                    canvas.drawText("("+score+")",(screenWidth /2), 1175*responsiveOffsetY, textPaintBlack);
                 }
                 else
                     drawButton("CONTINUE", (int) (1000*responsiveOffsetY), paintGrey, buttonText, paintButtonGrey, canvas);
@@ -506,16 +519,16 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             case ACTIVE:
                 // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
                 drawFloor(canvas);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790*responsiveOffsetX, 0, null);
 
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+ (float) patron.patronSize /2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                         if(!patron.satisfied) {
-                            int patronSpeed = 5;
+                            int patronSpeed = (int) (5*responsiveOffsetY);
                             patron.patronPosition += (int) (delta * patronSpeed * 60);
                             if (patron.patronPosition >= 1640)
                                 gameOver(1);
@@ -526,7 +539,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 // PLATES
                 synchronized (plates){
                     for(emptyPlate plate : plates){
-                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
+                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
                         plate.emptyPlatePos += (int) (delta * plate.emptyPlateSpeed * 60);
                         if(plate.emptyPlatePos>=1900) // TEST VALUE (1800)
                             gameOver(2);
@@ -535,7 +548,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 // PIZZAS
                 synchronized (pizzas) {
                     for(pizza pizza : pizzas){
-                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2, pizza.pizzaPosition, null);
+                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                         pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
                         if(pizza.pizzaPosition<=0)
                             gameOver(0);
@@ -545,7 +558,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawRect(25,50, (int)( (double) (score-prevScore)/(scoreToNextLevel-prevScore)*(screenWidth-50)+25), 100, paintYellow);
 
                 // PLAYER
-                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                 // POINTS
                 synchronized (points){
                     for(point point : points) {
@@ -558,78 +571,79 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawText("Level "+level, (float) screenWidth /2, 100, textScoreLevel);
                 break;
             case GAME_OVER:
-                // canvas.drawBitmap(GameCharacters.GAMEOVER_FLOOR.getSpriteSheetNoScale(), 0, 0, null);
                 drawFloorGameOver(canvas);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790*responsiveOffsetX, 0, null);
 
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+ (float) patron.patronSize /2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                     }
                 }
                 // PLATES
                 synchronized (plates){
                     for(emptyPlate plate : plates){
-                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
+                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
                     }
                 }
                 // PIZZAS
                 synchronized (pizzas) {
                     for(pizza pizza : pizzas){
-                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2, pizza.pizzaPosition, null);
+                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                     }
                 }
                 // PLAYER
-                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                canvas.drawBitmap(playerSprite, (int) (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
 
-                canvas.drawBitmap((GameCharacters.GAMEOVER_TEXT.getSpriteSheetNoScale()),0,800, null);
-                canvas.drawText(gameOverReason,540, 1100, textPaintBorder);
-                canvas.drawText(gameOverReason,540, 1100, textPaint);
+                // canvas.drawBitmap((GameCharacters.GAMEOVER_TEXT.getSpriteSheet()),0,800*responsiveOffsetY, null);
+                canvas.drawText("GAME OVER",screenWidth/2, 950*responsiveOffsetY, gameOverBackground);
+                canvas.drawText("GAME OVER",screenWidth/2, 950*responsiveOffsetY, gameOver);
+                canvas.drawText(gameOverReason,540*responsiveOffsetX, 1100*responsiveOffsetY, textPaintBorder);
+                canvas.drawText(gameOverReason,540*responsiveOffsetX, 1100*responsiveOffsetY, textPaint);
                 drawButton("MENU", 1700, paintRed, buttonText, paintDarkerRed, canvas);
                 if(score>highScore){
 
 
-                    canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaintBorder);
-                    canvas.drawText("NEW HIGH-SCORE: "+score, 520, 1200, textPaint);
+                    canvas.drawText("NEW HIGH-SCORE: "+score, 520*responsiveOffsetX, 1200*responsiveOffsetY, textPaintBorder);
+                    canvas.drawText("NEW HIGH-SCORE: "+score, 520*responsiveOffsetX, 1200*responsiveOffsetY, textPaint);
                 }
                 else{
-                    canvas.drawText("Score: "+score, 520, 1200, textPaintBorder);
-                    canvas.drawText("Score: "+score, 520, 1200, textPaint);
+                    canvas.drawText("Score: "+score, 520*responsiveOffsetX, 1200*responsiveOffsetY, textPaintBorder);
+                    canvas.drawText("Score: "+score, 520*responsiveOffsetX, 1200*responsiveOffsetY, textPaint);
                 }
                 break;
             case GUESSING:
                 canvas.drawRect(0,0,screenWidth,screenHeight,paintDarkGrey);
-                canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) screenWidth /2- (float) screenWidth /8, 0, null);
-                canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) screenWidth /2- (float) screenWidth /8, chef_head_bob, null);
+                canvas.drawBitmap(GameCharacters.CHEF_BODY.getSpriteSheet2xScale(), (float) screenWidth/4*3-screenWidth/4, screenHeight /3 - GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight(), null);
+                canvas.drawBitmap(GameCharacters.CHEF_HEAD.getSpriteSheet2xScale(), (float) screenWidth/4*3-screenWidth/4, screenHeight /3 - GameCharacters.CHEF_BODY.getSpriteSheet2xScale().getHeight() + chef_head_bob, null);
                 canvas.drawRect(0, (float) screenHeight /3, screenWidth, (float) screenHeight /2+ (float) screenHeight /6+guessBoxWidth*2, paintGrey);
-                canvas.drawBitmap(GameCharacters.SPEECH.getSpriteSheet2xScale(), 0, 100, null);
                 if(guessAnswer == 5){
                     if(guessCorrect){
-                        canvas.drawText("Correct! +2000 points!", (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth() /2, (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight() /2+100, textPaintBlack);
+                        drawSpeechBubble("Correct! +2000 points!", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), (int) (screenWidth/5*3), canvas);
                     }
                     else{
-                        canvas.drawText("Better luck next time", (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth() /2, (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight() /2+100, textPaintBlack);
+                        drawSpeechBubble("Better luck next time", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), (int) (screenWidth/5*3), canvas);
                     }
                     if(chef_head_bob_up){
-                        if(chef_head_bob >= 10)
+                        if(chef_head_bob >= 10*responsiveOffsetY)
                             chef_head_bob_up = false;
                         chef_head_bob++;
                     }
                     else{
-                        if(chef_head_bob <=-10)
+                        if(chef_head_bob <=-10*responsiveOffsetY)
                             chef_head_bob_up = true;
                         chef_head_bob--;
                     }
                 }
                 else if(swaps <= 0)
-                    canvas.drawText("Tap the correct box", (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth() /2, (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight() /2+100, textPaintBlack);
+                    drawSpeechBubble("Tap the correct box", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), (int) (screenWidth/5*3), canvas);
                 else {
-                    canvas.drawText("Pay attention to the pizza", (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getWidth() / 2, (float) GameCharacters.SPEECH.getSpriteSheet2xScale().getHeight() / 2 + 100, textPaintBlack);
+                    drawSpeechBubble("Pay attention to the pizza", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), (int) (screenWidth/5*3), canvas);
+
                 }
-                int speed = 30;
+                int speed = (int) (30*responsiveOffsetY);
                 for(guessBox box : guessBoxes) {
                     canvas.drawBitmap(box.spriteSheet, box.posX, box.posY, null);
                     if(box.posX != box.desiredX){
@@ -656,32 +670,31 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 }
                 break;
             case GUESSING_INTO:
-                // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
                 drawFloor(canvas);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790*responsiveOffsetX, 0, null);
 
                 // PATRONS
                 synchronized (patrons){
                     for(patron patron : patrons){
-                        canvas.drawBitmap(patron.spriteToRender,patron.patronAisle*360-360+ (float) patron.patronSize /2, patron.patronPosition, null);
+                        canvas.drawBitmap(patron.spriteToRender,(patron.patronAisle*360-360)*responsiveOffsetX+ (float) patron.patronSize /2, patron.patronPosition, null);
                     }
                 }
                 // PLATES
                 synchronized (plates){
                     for(emptyPlate plate : plates){
-                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),plate.emptyPlateAisle*360-180- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
+                        canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth /2, plate.emptyPlatePos, null);
                     }
                 }
                 // PIZZAS
                 synchronized (pizzas) {
                     for(pizza pizza : pizzas){
-                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),pizza.pizzaAislePosition*360-180- (float) pizzaWidth /2, pizza.pizzaPosition, null);
+                        canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                     }
                 }
                 // PLAYER and OTHERS
-                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                 canvas.drawRect(25,50, screenWidth-25, 100, paintYellow);
                 canvas.drawText("Level "+(level-1), (float) screenWidth /2, 100, textScoreLevel);
                 canvas.drawText("Score: "+score, (float) screenWidth /2, 175, textScorePaint);
@@ -737,10 +750,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             case GUESSING_OUT:
                 // canvas.drawBitmap(GameCharacters.FLOOR.getSpriteSheetNoScale(), 0, 0, null);
                 drawFloor(canvas);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430, 0, null);
-                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790, 0, null);
-                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 790*responsiveOffsetX, 0, null);
+                canvas.drawBitmap(playerSprite, playerPosition*360-180- (float) playerWidth /2, 1640*responsiveOffsetY, null);
 
                 if(System.currentTimeMillis() - graceTimer < 3000){
                     // Score, and progress bar
@@ -798,7 +811,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 List<point> toRemovePoint = new ArrayList<>();
                 synchronized (plates){
                     for(emptyPlate plate : plates){
-                        if(plate.emptyPlatePos >=1300){ // TEST VALUE (1640)
+                        if(plate.emptyPlatePos >=1300*responsiveOffsetY){ // TEST VALUE (1640)
                             if(plate.emptyPlateAisle == playerPosition){
                                 toRemovePlate.add(plate);
                                 playAudioPlateCollect();
@@ -818,7 +831,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                                     playAudioHitPatron();
                                     if(currentGameState != gameState.TUTORIAL) {
                                         synchronized (points) {
-                                            points.add(new point(patron.patronAisle * 360 - patron.patronSize, patron.patronPosition, 100));
+                                            points.add(new point( (int) ((patron.patronAisle * 360)*responsiveOffsetX - patron.patronSize), patron.patronPosition, 100));
                                         }
                                     }
                                 }
@@ -1111,9 +1124,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         break;
                     case 15:
                         if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
-                            if(event.getX()<=360)
+                            if(event.getX()<=360*responsiveOffsetX)
                                 playerPosition=1;
-                            else if(event.getX()<=720)
+                            else if(event.getX()<=720*responsiveOffsetX)
                                 playerPosition=2;
                             else
                                 playerPosition=3;
@@ -1165,10 +1178,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 // 0 = no position/failure | 1 = left position | 2 = mid position | 3 = right position
                 if(event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN) {
                     int newPosition;
-                    if(event.getX()<=360) {
+                    if(event.getX()<=360*responsiveOffsetX) {
                         newPosition = 1;
                     }
-                    else if(event.getX()<=720)
+                    else if(event.getX()<=720*responsiveOffsetX)
                         newPosition =2;
                     else
                         newPosition =3;
@@ -1195,17 +1208,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 break;
             case GAME_OVER:
                 if(event.getAction() == MotionEvent.ACTION_UP){
-                    if(event.getX()>= (float) screenWidth /5 && event.getX()<=screenWidth- (float) screenWidth /5 && event.getY() >= 1700 && event.getY() <= 1900){
-                        clearEntities();
-
-                        if(score > highScore) {
-                            highScore = score;
-                            SharedPreferences.Editor editor = save.edit();
-                            editor.putInt("highscore", score).apply();
-                        }
-                        score = 0;
-                        currentGameState = gameState.MAIN_MENU;
+                    clearEntities();
+                    if(score > highScore) {
+                        highScore = score;
+                        SharedPreferences.Editor editor = save.edit();
+                        editor.putInt("highscore", score).apply();
                     }
+                    score = 0;
+                    currentGameState = gameState.MAIN_MENU;
                 }
                 break;
             case GUESSING:
@@ -1284,14 +1294,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         canvas.drawRoundRect(widthLeft, posY, widthRight, posY+height, 50, 50, speechBubbleWhite);
         canvas.drawText(text, widthLeft+ (float) (widthRight - widthLeft) /2, posY+125*responsiveOffsetY, textPaintBlack);
     }
-    public void drawSpeechBubble(String text, int posY, int posX, Canvas canvas){
-        int totalWidth = screenWidth - screenWidth*2/15;
+    public void drawSpeechBubble(String text, int posY, int posX, int posX2, Canvas canvas){
         int height = (int) (300*responsiveOffsetY);
         int borderSize = (int) (15*responsiveOffsetX);
 
-        canvas.drawRoundRect(posX-borderSize, posY-borderSize, totalWidth+posX+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
-        canvas.drawRoundRect(posX, posY, totalWidth+posX, posY+height, 50, 50, speechBubbleWhite);
-        canvas.drawText(text, posX, posY+125*responsiveOffsetY, textPaintBlack);
+        canvas.drawRoundRect(posX-borderSize, posY-borderSize, posX2+borderSize, posY+height+borderSize, 50, 50, speechBubbleBorder);
+        canvas.drawRoundRect(posX, posY, posX2, posY+height, 50, 50, speechBubbleWhite);
+        canvas.drawText(text, posX+posX2/2, posY+125*responsiveOffsetY, textPaintBlack);
     }
     public void drawSpeechBubble(String text, String text2, int posY, Canvas canvas){
         int widthLeft = screenWidth/15;
@@ -1577,8 +1586,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
     public class pizza{
         int pizzaAislePosition = playerPosition; // X
-        int pizzaSpeed = 10;
-        int pizzaPosition = 1640; // Y
+        int pizzaSpeed = (int) (10*responsiveOffsetY);
+        int pizzaPosition = (int) (1640*responsiveOffsetY); // Y
     }
     public class patron{
         private int patronPosition;
@@ -1587,7 +1596,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         int satisfiedTimer = 2 * 60;
         private Bitmap spriteToRender;
         private long timer = SystemClock.elapsedRealtime();
-        private final int patronSize = 100;
+        private final int patronSize = (int) (100*responsiveOffsetX);
         public patron(int pos, int aisle, Bitmap spriteToRender){
             this.patronPosition = pos;
             this.spriteToRender = spriteToRender;
@@ -1599,7 +1608,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         }
     }
     public class emptyPlate{
-        private final int emptyPlateSpeed = 13;
+        private final int emptyPlateSpeed = (int) (13*responsiveOffsetY);
         private final int emptyPlateAisle;
         private int emptyPlatePos;
         public emptyPlate(int pos, int aisle){
