@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.pizzarush'
+    namespace 'com.kama.pizzarush'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.pizzarush"
+        applicationId "com.kama.pizzarush"
         minSdk 21
         targetSdk 33
         versionCode 1
