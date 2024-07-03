@@ -68,15 +68,15 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     private int playerPosition = 2;
     private double playerAnimationState = 0;
     private int score = save.getInt("score", 0);
-    int timesCorrectGuess = save.getInt("timesCorrectGuess",0);
-    private int scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
-    private int prevScore = (int) Math.pow(level-1, 2)*1500+timesCorrectGuess*2000;
+    int lives = save.getInt("lives", 3);
+    private int scoreToNextLevel = (int) Math.pow(level, 2)*1500;
+    private int prevScore = (int) Math.pow(level-1, 2)*1500;
     private int highScore = save.getInt("highscore",0);
     private boolean hasMoved = false;
     private int danceTimer=0, danceIndex=0;
     final Object patronSleep = new Object();
     private final GameLoop gameLoop;
-    String gameOverReason = "Default";
+
     private enum gameState{
         ACTIVE,
         GAME_OVER,
@@ -112,7 +112,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     float responsiveOffsetX = (float) screenWidth/1080;
     float responsiveOffsetY = (float) screenHeight/2097;
     // smaller screen <1 | bigger screen >1
-
     private Bitmap playerSprite = GameCharacters.PLAYER.getSpriteSheet();
     final private int menuBGHeight = GameCharacters.TITLE_BG.getSpriteSheetNoScale().getHeight();
     final private int playerWidth = GameCharacters.PLAYER.getSpriteSheet().getWidth();
@@ -120,7 +119,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
     final private int emptyPlateWidth = GameCharacters.PLATE.getSpriteSheet().getWidth();
     final private int guessBoxWidth = GameCharacters.PIZZABOX.getSpriteSheet().getWidth();
     private int tutorialIn = -screenWidth/2;
-
+    OneUp UP1 = new OneUp();
     public GamePanel(Context context) {
         super(context);
 
@@ -355,8 +354,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             for(pizza pizza : pizzas){
                                 canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                                 pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
-                                if(pizza.pizzaPosition<=0)
-                                    gameOver(0);
                             }
                         }
                         canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
@@ -370,8 +367,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             for(pizza pizza : pizzas){
                                 canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                                 pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
-                                if(pizza.pizzaPosition<=0)
-                                    gameOver(0);
+                                if(pizza.pizzaPosition<=0 && !pizza.toRemove) {
+                                    minusLife();
+                                    pizza.toRemove = true;
+                                }
                             }
                         }
                         canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
@@ -411,8 +410,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         for(emptyPlate plate : plates){
                             canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth*responsiveOffsetX /2, plate.emptyPlatePos, null);
                             plate.emptyPlatePos += (int) (delta * plate.emptyPlateSpeed * 60);
-                            if(plate.emptyPlatePos>=1900*responsiveOffsetY)
-                                gameOver(2);
+                            if(plate.emptyPlatePos>=1900*responsiveOffsetY && !plate.toRemove) {
+                                minusLife();
+                                plate.toRemove = true;
+                            }
                             canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                         }
                         break;
@@ -533,8 +534,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         if(!patron.satisfied) {
                             int patronSpeed = (int) (5*responsiveOffsetY);
                             patron.patronPosition += (int) (delta * patronSpeed * 60);
-                            if (patron.patronPosition >= 1640)
-                                gameOver(1);
+                            if (patron.patronPosition >= 1640 && !patron.toRemove) {
+                                minusLife();
+                                patron.toRemove = true;
+                            }
                         }
                     }
 
@@ -544,8 +547,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     for(emptyPlate plate : plates){
                         canvas.drawBitmap(GameCharacters.PLATE.getSpriteSheet(),(plate.emptyPlateAisle*360-180)*responsiveOffsetX- (float) emptyPlateWidth*responsiveOffsetX /2, plate.emptyPlatePos, null);
                         plate.emptyPlatePos += (int) (delta * plate.emptyPlateSpeed * 60);
-                        if(plate.emptyPlatePos>=1900*responsiveOffsetY) // TEST VALUE (1800)
-                            gameOver(2);
+                        if(plate.emptyPlatePos>=1900*responsiveOffsetY && !plate.toRemove) {
+                            minusLife();
+                            plate.toRemove = true;
+                        }
                     }
                 }
                 // PIZZAS
@@ -553,8 +558,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     for(pizza pizza : pizzas){
                         canvas.drawBitmap(GameCharacters.PIZZA.getSpriteSheet(),(pizza.pizzaAislePosition*360-180)*responsiveOffsetX- (float) pizzaWidth /2, pizza.pizzaPosition, null);
                         pizza.pizzaPosition -= (int) (delta * pizza.pizzaSpeed * 60);
-                        if(pizza.pizzaPosition<=0)
-                            gameOver(0);
+                        if(pizza.pizzaPosition<=0 && !pizza.toRemove) {
+                            minusLife();
+                            pizza.toRemove = true;
+                        }
                     }
                 }
                 canvas.drawRect(25*responsiveOffsetX,50*responsiveOffsetY, screenWidth-25*responsiveOffsetX, 100*responsiveOffsetY, paintGrey);
@@ -562,6 +569,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
                 // PLAYER
                 canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
+
+                // HEARTS
+                for(int i=0; i<lives; i++){
+                    canvas.drawBitmap(GameCharacters.HEART.getSpriteSheet2xScale(),((float) (i * screenWidth) /7+20*responsiveOffsetX), 1900*responsiveOffsetY, null);
+                }
+
+
                 // POINTS
                 synchronized (points){
                     for(point point : points) {
@@ -570,10 +584,17 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         point.framesAlive++;
                     }
                 }
+                if(UP1.posX>0){
+                    canvas.drawText("1UP",UP1.posX, UP1.posY, textPaintBorder);
+                    canvas.drawText("1UP",UP1.posX, UP1.posY, textPaint);
+                    UP1.posY-=1;
+                    UP1.framesAlive++;
+                }
                 canvas.drawText("Score: "+score, (float) screenWidth /2, 175*responsiveOffsetY, textScorePaint);
                 canvas.drawText("Level "+level, (float) screenWidth /2, 100*responsiveOffsetY, textScoreLevel);
+
                 break;
-            case GAME_OVER:
+            case GAME_OVER: // TODO add a little picture of the shop closing or of a disappointed chef
                 drawFloorGameOver(canvas);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 70*responsiveOffsetX, 0, null);
                 canvas.drawBitmap(GameCharacters.COUNTER.getSpriteSheet(), 430*responsiveOffsetX, 0, null);
@@ -601,8 +622,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawBitmap(playerSprite, (playerPosition*360-180)*responsiveOffsetX- (float) playerWidth /2, 1640*responsiveOffsetY, null);
                 canvas.drawText("GAME OVER", (float) screenWidth /2, 950*responsiveOffsetY, gameOverBackground);
                 canvas.drawText("GAME OVER", (float) screenWidth /2, 950*responsiveOffsetY, gameOver);
-                canvas.drawText(gameOverReason,540*responsiveOffsetX, 1100*responsiveOffsetY, textPaintBorder);
-                canvas.drawText(gameOverReason,540*responsiveOffsetX, 1100*responsiveOffsetY, textPaint);
+                canvas.drawText("You ran out of chances!",540*responsiveOffsetX, 1100*responsiveOffsetY, textPaintBorder);
+                canvas.drawText("You ran out of chances!",540*responsiveOffsetX, 1100*responsiveOffsetY, textPaint);
                 drawButton("MENU", (int) (1700*responsiveOffsetY), paintRed, buttonText, paintDarkerRed, canvas);
                 if(score>highScore){
 
@@ -622,7 +643,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 canvas.drawRect(0, (float) screenHeight /3, screenWidth, (float) screenHeight /2+ (float) screenHeight /6+guessBoxWidth*2, paintGrey);
                 if(guessAnswer == 5){
                     if(guessCorrect){
-                        drawSpeechBubble("Correct! +2000 points!", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), screenWidth/5*3, canvas);
+                        drawSpeechBubble("Correct! Extra life!", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), screenWidth/5*3, canvas);
                     }
                     else{
                         drawSpeechBubble("Better luck next time", (int) (200*responsiveOffsetY), (int) (20*responsiveOffsetX), screenWidth/5*3, canvas);
@@ -775,8 +796,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                     canvas.drawText("READY TO SERVE",placement, 800*responsiveOffsetY, textPaintTransition);
                 }
                 else{
-                    prevScore = (int) Math.pow(level-1, 2)*1500+timesCorrectGuess*2000;
-                    scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+                    prevScore = (int) Math.pow(level-1, 2)*1500;
+                    scoreToNextLevel = (int) Math.pow(level, 2)*1500;
 
                     gameLoop.patronSpawnRate = level*7;
                     currentGameState = gameState.ACTIVE;
@@ -817,17 +838,25 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 List<point> toRemovePoint = new ArrayList<>();
                 synchronized (plates){
                     for(emptyPlate plate : plates){
-                        if(plate.emptyPlatePos >=1300*responsiveOffsetY){
-                            if(plate.emptyPlateAisle == playerPosition){
-                                toRemovePlate.add(plate);
-                                playAudioPlateCollect();
-                                tutorialState = 12; // Wait for player to catch plate
-                            }
+                        if((plate.emptyPlatePos >=1300*responsiveOffsetY && plate.emptyPlateAisle == playerPosition)){
+                            toRemovePlate.add(plate);
+                            playAudioPlateCollect();
+                            tutorialState = 12; // Wait for player to catch plate
+                        }
+                        else if(plate.toRemove){
+                            toRemovePlate.add(plate);
+                            if(lives>1)
+                                playAudioPanDrop();
                         }
                     }
                 }
                 synchronized (pizzas){
                     for(pizza pizza : pizzas){
+                        if(pizza.toRemove){
+                            toRemovePizza.add(pizza);
+                            if(lives>1)
+                                playAudioThud();
+                        }
                         synchronized (patrons) {
                             for (patron patron : patrons) {
                                 if(isColliding(pizza, patron)){
@@ -841,6 +870,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                                         }
                                     }
                                 }
+                                else if(patron.toRemove){
+                                    toRemovePatron.add(patron);
+                                    if(lives>1)
+                                        playAudioBark();
+                                }
                             }
                         }
                     }
@@ -851,6 +885,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                             toRemovePoint.add(point);
                         }
                     }
+                }
+                if(UP1.framesAlive >= UP1.endFrames){
+                    UP1.framesAlive = 0;
+                    UP1.posX=-2000;
                 }
                 // Satisfied Patrons
                 if(currentGameState == gameState.ACTIVE || currentGameState == gameState.TUTORIAL) {
@@ -919,9 +957,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                 }
                 if(score >= scoreToNextLevel){
                     SharedPreferences.Editor editor = save.edit();
-                    prevScore = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+                    prevScore = (int) Math.pow(level, 2)*1500;
                     level++;
-                    scoreToNextLevel = (int) Math.pow(level, 2)*1500+timesCorrectGuess*2000;
+                    scoreToNextLevel = (int) Math.pow(level, 2)*1500;
                     editor.putInt("scoreToNextLevel", scoreToNextLevel);
                     editor.putInt("level",level).apply();
                     currentGameState = gameState.GUESSING_INTO;
@@ -945,13 +983,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
                         for(guessBox box : guessBoxes){
                             if(box.posId == guessAnswer && box.id == correctBox){
                                 guessCorrect = true;
-                                synchronized (points){
-                                    timesCorrectGuess++;
-                                    scoreToNextLevel+=2000;
-                                    SharedPreferences.Editor editor = save.edit();
-                                    editor.putInt("timesCorrectGuess", timesCorrectGuess).apply();
-                                    points.add(new point(500,700,2000));
-                                }
+                                UP1.plusOne();
+                                UP1.posX=screenWidth/2;
                                 break;
                             }
                         }
@@ -1370,6 +1403,15 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             patrons.add(new patron((int) (700*responsiveOffsetY), 2, GameCharacters.PATRON_WALK1.getSpriteSheet()));
         }
     }
+    public void minusLife(){
+        SharedPreferences.Editor editor = save.edit();
+        lives--;
+        editor.putInt("lives", lives).apply();
+        if(lives<=0){
+            playAudioGameOver();
+            currentGameState = gameState.GAME_OVER;
+        }
+    }
     public void clearEntities(){
         synchronized (pizzas) {
             pizzas.clear();
@@ -1384,38 +1426,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
 
     public void wipeCache(){
         prevScore = 0;
-        timesCorrectGuess=0;
         scoreToNextLevel = 1500;
         score=0;
         level=1;
+        lives=3;
+        save.edit().remove("lives").apply();
         save.edit().remove("score").apply();
         save.edit().remove("level").apply();
-        save.edit().remove("timesCorrectGuess").apply();
         System.out.println("Wiped cache data");
-    }
-    public void gameOver(int reason){
-
-        if(reason!=-1) {
-            playAudioGameOver();
-            currentGameState = gameState.GAME_OVER;
-        }
-
-        switch (reason){
-            case 0:
-                System.out.println("GAME OVER: \"Reason 0\" (Pizza has fallen off the edge)");
-                gameOverReason = "A pizza fell off the edge!";
-                break;
-            case 1:
-                System.out.println("GAME OVER: \"Reason 1\" (Patron has reached player)");
-                gameOverReason = "A customer was unhappy!";
-                break;
-            case 2:
-                System.out.println("GAME OVER: \"Reason 2\" (Empty plate has fallen)");
-                gameOverReason = "A plate has fallen!";
-                break;
-            default:
-                break;
-        }
     }
     public void swapBoxes(){
         int type = random.nextInt(4);
@@ -1547,6 +1565,18 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         MediaPlayer plateCollect = MediaPlayer.create(MainActivity.getGameContext(), R.raw.platecollect );
         plateCollect.start();
     }
+    public void playAudioPanDrop(){
+        MediaPlayer panDrop = MediaPlayer.create(MainActivity.getGameContext(), R.raw.pan_drop );
+        panDrop.start();
+    }
+    public void playAudioBark(){
+        MediaPlayer bark = MediaPlayer.create(MainActivity.getGameContext(), R.raw.bark );
+        bark.start();
+    }
+    public void playAudioThud(){
+        MediaPlayer thud = MediaPlayer.create(MainActivity.getGameContext(), R.raw.thud );
+        thud.start();
+    }
 
     public void playGuessBGMusic(){
         if(!bgMusicGuess.isPlaying()){
@@ -1599,11 +1629,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         int pizzaAislePosition = playerPosition; // X
         int pizzaSpeed = (int) (10*responsiveOffsetY);
         int pizzaPosition = (int) (1640*responsiveOffsetY); // Y
+        boolean toRemove = false;
     }
     public class patron{
         private int patronPosition;
         private final int patronAisle;
         boolean satisfied = false;
+        boolean toRemove = false;
         int satisfiedTimer = 2 * 60;
         private Bitmap spriteToRender;
         private long timer = SystemClock.elapsedRealtime();
@@ -1622,6 +1654,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
         private final int emptyPlateSpeed = (int) (13*responsiveOffsetY);
         private final int emptyPlateAisle;
         private int emptyPlatePos;
+        boolean toRemove = false;
         public emptyPlate(int pos, int aisle){
             this.emptyPlatePos = pos;
             this.emptyPlateAisle = aisle;
@@ -1642,6 +1675,19 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback{
             editor.putInt("score",score).apply();
         }
     }
+    public class OneUp{
+        int posY = screenHeight/2;
+        int posX = -2000;
+        int framesAlive = 0;
+        int endFrames = 200; // How long it will stay on screen
+        public void plusOne(){
+            lives++;
+            SharedPreferences.Editor editor = save.edit();
+            editor.putInt("lives",lives).apply();
+        }
+
+    }
+
     public class menuBG{
         int posY;
         public menuBG(int posY){

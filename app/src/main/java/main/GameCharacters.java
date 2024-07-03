@@ -31,6 +31,7 @@ public enum GameCharacters {
     CHEF_BODY(R.drawable.chef_body),
     CHEF_HEAD(R.drawable.chef_head),
     COUNTER(R.drawable.counter),
+    HEART(R.drawable.heart),
     TITLE_BG(R.drawable.title_bg);
 
     private Bitmap spriteSheet;
